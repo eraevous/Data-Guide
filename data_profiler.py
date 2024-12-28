@@ -3,6 +3,7 @@ import numpy as np
 from scipy.stats import entropy
 import matplotlib.pyplot as plt
 import seaborn as sns
+import missingno as msno
 
 class DataProfiler:
     """
@@ -260,6 +261,48 @@ def identify_invalid_patterns(df, column, patterns):
     col_data = df[column]
     invalid_values = col_data[col_data.isin(patterns)]
     return invalid_values.value_counts().to_dict()
+    
+# Bar Chart: Categorical Variable
+def bar_chart(data, column, title):
+    data[column].value_counts().plot(kind='bar', color='skyblue')
+    plt.title(title)
+    plt.xlabel(column)
+    plt.ylabel('Count')
+    plt.show()
+
+# Histogram: Numerical Variable
+def histogram(data, column, title):
+    data[column].plot(kind='hist', bins=20, color='lightgreen', edgecolor='black')
+    plt.title(title)
+    plt.xlabel(column)
+    plt.ylabel('Frequency')
+    plt.show()
+
+# Box Plot: Outliers and Spread
+def box_plot(data, column, title):
+    sns.boxplot(y=data[column], color='coral')
+    plt.title(title)
+    plt.ylabel(column)
+    plt.show()
+
+# Missing Value Matrix
+def missing_value_matrix(data):
+    msno.matrix(data)
+    plt.title("Missing Value Matrix")
+    plt.show()
+
+def append_section(file_path, section_title, content):
+    """
+    Append a new section to an existing markdown file.
+    
+    Args:
+        file_path (str): Path to the markdown file.
+        section_title (str): Title of the new section.
+        content (str): Content to append.
+    """
+    with open(file_path, "a") as file:
+        file.write(f"\n\n## {section_title}\n")
+        file.write(content)
 
 if __name__ == "__main__":
     # Example dataset
