@@ -1,6 +1,7 @@
 # Ignore all files in the data/raw/ and data/processed/ directories
 data/raw/
 data/processed/
+data_pipeline/config.json
 
 # Optional: Ignore all .csv files
 *.csv

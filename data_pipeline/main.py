@@ -1,21 +1,35 @@
+import json
 from api_client import APIClient
 from data_pull import DataPull
 
+def load_config(config_file):
+    with open(config_file, 'r') as file:
+        config = json.load(file)
+    return config
+
 def main():
+    # Load configuration
+    config = load_config('config.json')
+
     # Initialize API client
-    client = APIClient(login_url="https://live6.dentrixascend.com/login")
+    client = APIClient(login_url=config["login_url"])
 
     # Load or authenticate
     client.load_cookies()
     if not client.session.cookies:
         client.login(
-            username="your_username",
-            password="your_password",
-            organization="your_organization"
+            username=config["username"],
+            password=config["password"],
+            organization=config["organization"]
         )
 
     # Static parameters for GET
-    get_url = "https://live6.dentrixascend.com/statementSubmissionReport"
+    get_urls = [
+        "https://live6.dentrixascend.com/statementSubmissionReport?location=14000000000286&dateTimeFrom=0&dateTimeTo=9999999999999&deliveryMethod=ELECTRONIC&from=1&rows=10000&field=dateTime&order=desc",
+        "https://live6.dentrixascend.com/statementSubmissionReport?location=14000000000286&dateTimeFrom=0&dateTimeTo=9999999999999&deliveryMethod=MAIL_FOR_ME&from=1&rows=10000&field=dateTime&order=desc",
+        "https://live6.dentrixascend.com/statementSubmissionReport?location=14000000000286&dateTimeFrom=0&dateTimeTo=9999999999999&deliveryMethod=PRINT&from=1&rows=10000&field=dateTime&order=desc"
+    ]
+   
     get_params = {
         "location": "14000000000286",
         "dateTimeFrom": "0",
@@ -26,18 +40,28 @@ def main():
         "field": "dateTime",
         "order": "desc"
     }
-    DataPull.get_data(client, get_url, get_params, "statement_submission.csv")
+    DataPull.get_data(client, get_urls, get_params, "statement_submission.csv")
 
     # Static parameters for POST
-    post_url = "https://live6.dentrixascend.com/agedARReport"
+    post_urls = ["https://live6.dentrixascend.com/agedReceivables/create"]
     post_payload = {
-        "location": "14000000000286",
-        "dateRange": {"from": "2024-01-01", "to": "2024-12-31"},
-        "filters": {"minBalance": 0},
-        "groupBy": "provider",
-        "rows": 10000
+        "0": {"id": 14000000000191},
+        "1": {"id": 14000000000756},
+        "2": {"id": 14000000001321},
+        "3": {"id": 14000000001886},
+        "asOfDate": 1734480000000,
+        "billingTypes": [],
+        "isEmpty": False,
+        "isPendingClaimCheckboxDisabled": False,
+        "isPendingClaimHidden": False,
+        "locations": [14000000000286],
+        "period": "ALL",
+        "periodName": "All",
+        "skipPendingClaim": False,
+        "start": 1644772954021,
+        "withOrganization": False
     }
-    DataPull.post_data(client, post_url, post_payload, "aged_ar_report.csv")
+    DataPull.post_data(client, post_urls, post_payload, "aged_ar_report.csv")
 
 if __name__ == "__main__":
     main()
