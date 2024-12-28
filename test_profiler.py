@@ -2,7 +2,9 @@ import pandas as pd
 from data_profiler import DataProfiler  # Ensure this matches the actual file name and class name
 
 # Load the CSV file into a DataFrame
-df = pd.read_csv("C:/Users/Admin/Documents/Career/Juniper/Data/Treatment Tracker - mod.csv")
+# df = pd.read_csv("C:/Users/Admin/Documents/Career/Juniper/Data/Treatment Tracker - mod.csv")
+# df = pd.read_csv("C:/Users/Admin/Documents/Career/Juniper/Data/PatientList.csv")
+df = pd.read_csv("C:/Users/Admin/Documents/GitHub/Juniper/scripts/data/output.csv")
 
 # Initialize the DataProfiler with the DataFrame
 profiler = DataProfiler(df)
@@ -27,7 +29,7 @@ new_dataset_content = """
 - **Total Columns**: 15
 """
 
-append_section("data_guide_project.md", "Dataset 3", new_dataset_content)
+#append_section("data_guide_project.md", "Dataset 3", new_dataset_content)
 
 def generate_toc(file_path):
     """
@@ -53,7 +55,7 @@ def generate_toc(file_path):
     with open(file_path, "w") as file:
         file.write(toc_content + "\n---\n" + content)
 
-generate_toc("data_guide_project.md")
+#generate_toc("data_guide_project.md")
 
 
 # Generate and print the Markdown report

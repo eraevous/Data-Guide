@@ -4,6 +4,7 @@ from scipy.stats import entropy
 import matplotlib.pyplot as plt
 import seaborn as sns
 import missingno as msno
+import phonenumbers
 
 class DataProfiler:
     """
@@ -53,6 +54,18 @@ class DataProfiler:
         # Implement phone number parsing logic here
         return value  # Placeholder implementation   
 
+    def profile_phone_numbers(df, phone_column):
+        valid_count = 0
+        invalid_count = 0
+        for number in df[phone_column]:
+            try:
+                parsed = phonenumbers.parse(number, "US")
+                if phonenumbers.is_valid_number(parsed):
+                    valid_count += 1
+            except:
+                invalid_count += 1
+        return {"valid_phone_numbers": valid_count, "invalid_phone_numbers": invalid_count}
+
     def profile_dataset(self):
         """
         Profiles the entire dataset, including high-level metadata and duplicate analysis.
@@ -64,6 +77,16 @@ class DataProfiler:
         except Exception as e:
             self.results["dataset_metadata"] = {"error": str(e)}
     
+    def detect_outliers(series, method='iqr'):
+        if method == 'iqr':
+            q1 = series.quantile(0.25)
+            q3 = series.quantile(0.75)
+            iqr = q3 - q1
+            return series[(series < (q1 - 1.5 * iqr)) | (series > (q3 + 1.5 * iqr))]
+        elif method == 'zscore':
+            z_scores = (series - series.mean()) / series.std()
+            return series[(z_scores < -3) | (z_scores > 3)]
+
     def profile_columns(self):
         """
         Profiles each column in the dataset based on its data type.
@@ -223,6 +246,16 @@ def profile_column_as_numeric(df, column):
         "least_common": least_common
     }
 
+def profile_spatial_data(df, lat_col=None, lon_col=None, address_col=None):
+    spatial_profile = {}
+    if lat_col and lon_col:
+        spatial_profile['valid_coordinates'] = df[(df[lat_col].between(-90, 90)) & (df[lon_col].between(-180, 180))].shape[0]
+        spatial_profile['invalid_coordinates'] = df.shape[0] - spatial_profile['valid_coordinates']
+    if address_col:
+        spatial_profile['unique_addresses'] = df[address_col].nunique()
+    return spatial_profile
+
+
 def profile_temporal_data(df):
     """
     Profiles temporal data, providing insights into time coverage, gaps, and trends.
@@ -242,7 +275,9 @@ def profile_temporal_data(df):
             "latest": col_data.max(),
             "time_span": col_data.max() - col_data.min(),
             "temporal_gaps": col_data.diff().describe().to_dict(),
-            "trends": col_data.value_counts().sort_index().to_dict()
+            "day_of_week_distribution": col_data.dt.dayofweek.value_counts().to_dict(),
+            "monthly_trends": col_data.dt.month.value_counts().sort_index().to_dict(),
+            "day_trends": col_data.value_counts().sort_index().to_dict()
         }
     return temporal_analysis
 
