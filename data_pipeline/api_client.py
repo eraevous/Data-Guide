@@ -6,10 +6,9 @@ import json
 class APIClient:
     COOKIE_FILE = "session_cookies.pkl"
 
-    def __init__(self, login_url, cookie_file="cookie.json", config_file="config.json"):
+    def __init__(self, login_url, cookie_file="cookie.json"):
         self.login_url = login_url
         self.cookie_file = cookie_file
-        self.config_file = config_file
         self.session = requests.Session()
         self.headers = {
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
@@ -79,6 +78,21 @@ class APIClient:
                 raise ValueError("Unsupported HTTP method.")
 
             print(f"{method} {url} - Status Code: {response.status_code}")
+            print(f"Response Headers: {response.headers}")
+            print(f"Response Content: {response.text}")
+
+            # Output headers and cookies to a text file for debugging
+            with open("debug_output.txt", "w") as file:
+                file.write("Headers:\n")
+                for key, value in response.headers.items():
+                    file.write(f"{key}: {value}\n")
+                file.write("\nCookies:\n")
+                for key, value in self.session.cookies.items():
+                    file.write(f"{key}: {value}\n")
+                if self.hardcoded_cookie:
+                    file.write("\nHardcoded Cookie:\n")
+                    file.write(self.hardcoded_cookie)
+
             # Check if response is valid JSON
             try:
                 return response.json()

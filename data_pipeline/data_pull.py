@@ -4,14 +4,25 @@ def fetch_aged_ar_report(client):
     """
     Fetch the Aged AR Report using a POST request.
     """
-    url = "https://live6.dentrixascend.com/agedARReport"
+    url = "https://live6.dentrixascend.com/agedReceivables/create"
     payload = {
-        "location": "14000000000286",
-        "dateRange": {"from": "2024-01-01", "to": "2024-12-31"},
-        "filters": {"minBalance": 0},
-        "groupBy": "provider",
-        "rows": 10000
+        "0": {"id": 14000000000191},
+        "1": {"id": 14000000000756},
+        "2": {"id": 14000000001321},
+        "3": {"id": 14000000001886},
+        "asOfDate": 1734480000000,
+        "billingTypes": [],
+        "isEmpty": False,
+        "isPendingClaimCheckboxDisabled": False,
+        "isPendingClaimHidden": False,
+        "locations": [14000000000286],
+        "period": "ALL",
+        "periodName": "All",
+        "skipPendingClaim": False,
+        "start": 1644772954021,
+        "withOrganization": False
     }
+    
     data = client.make_request(url, method="POST", payload=payload)
     # Save to CSV
     pd.json_normalize(data).to_csv("aged_ar_report.csv", index=False)
