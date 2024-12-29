@@ -1,45 +1,29 @@
 Headers:
-Content-Type: text/html;charset=UTF-8
+Content-Type: application/json;charset=UTF-8
 X-OneAgent-JS-Injection: true
 Timing-Allow-Origin: *
-Server-Timing: dtRpid;desc="119604424", dtTao;desc="1", dtSInfo;desc="0"
-Vary: Origin, Access-Control-Request-Method, Access-Control-Request-Headers, Accept-Encoding
+Server-Timing: dtRpid;desc="-1701494806", dtTao;desc="1", dtSInfo;desc="0"
+Vary: origin,access-control-request-method,access-control-request-headers,accept-encoding
 X-XSS-Protection: 1; mode=block
 X-Frame-Options: SAMEORIGIN
-Referrer-Policy: same-origin
-Strict-Transport-Security: max-age=31536000; includeSubDomains
-X-Content-Type-Options: nosniff
-Content-Security-Policy: script-src 'nonce-ZDExZWM2NzI0Yzc2OWEzMzUwMmEwNTU1NDIwNWQ1YjY=' 'self' 'strict-dynamic' https://live6.dentrixascend.com/; script-src-elem 'nonce-ZDExZWM2NzI0Yzc2OWEzMzUwMmEwNTU1NDIwNWQ1YjY=' 'self' https://live6.dentrixascend.com/; script-src-attr 'nonce-ZDExZWM2NzI0Yzc2OWEzMzUwMmEwNTU1NDIwNWQ1YjY=' 'self' https://live6.dentrixascend.com/; object-src 'self'; base-uri https://live6.dentrixascend.com/; report-uri https://live6.dentrixascend.com/; form-action 'nonce-ZDExZWM2NzI0Yzc2OWEzMzUwMmEwNTU1NDIwNWQ1YjY=' 'self' https://live6.dentrixascend.com/ https://*.okta.com/ https://login.microsoftonline.com/; frame-ancestors 'self' https://live6.dentrixascend.com/;
-Content-Language: en-US
-X-Akamai-Transformed: 9 - 0 pmb=mTOE,1
 Content-Encoding: gzip
-Expires: Sun, 29 Dec 2024 02:25:56 GMT
+Expires: Sun, 29 Dec 2024 03:24:29 GMT
 Cache-Control: max-age=0, no-cache, no-store
 Pragma: no-cache
-Date: Sun, 29 Dec 2024 02:25:56 GMT
-Content-Length: 2642
+Date: Sun, 29 Dec 2024 03:24:29 GMT
+Content-Length: 15131
 Connection: keep-alive
 
 Cookies:
-dtCookie: v_4_srv_9_sn_4E5D27D7FB0D0DAC9C3D5185DB19C0C3_perc_100000_ol_0_mul_1_app-3A0ee0d180ab8d58ff_0_rcs-3Acss_0
+dtCookie: v_4_srv_6_sn_26F51AB550C5EA57F205BD9138DD2366_perc_100000_ol_0_mul_1_app-3A0ee0d180ab8d58ff_0_rcs-3Acss_0
+_abck: D704544FCABCE3E5785AECD2EC98B103~-1~YAAQGys0F1ycKL+TAQAAWpRxEA2xW/OkGpyPWSaARBRo6d52terRVpX8pzaPOHx4WyUuCJaUsOabgxKaRf9aJ12VseiqKHeVBrcge+ad4W1r8bFe9e/3jNLUVPifZw3b0Kk25tPO7GrBeH/FMiIHxvmGqfpZSlmCokqTnPdjXd1m5zvhGXQ1NCSbQdXMDy1xKIKhlSnfTduuGcJtauPQoOQJOyHKYA797270tYUCMN18h90WZ8RasJ8PYkN6d1cHzXVnW6iHRubWtcJqa4u3M4kZZkAO4c1NQMZfjxUkfdQVw0zWD7NS+I2RUcaXUrNytOt95NIU4n/64y5NPV1l+HUlm4URjzG1PqmrJzxtccJ6Q1CiFaOQfs9gxbzlRjLjAd6NdyHT4Jo4CaNJFvObbr6ssAziA1dnFkwbEDLN66oV78qH~-1~-1~-1
+bm_sz: 5D9B8D8C4D772E20049994B4C4DEAC50~YAAQGys0F12cKL+TAQAAWpRxEBrMBE58mpOEYRpStPGNDtK/6hAsTaGP4lNoeESJ+YgdzjFFWHE11yLcC68jjGiBZ15JLGF9Qd/WTNFl5xHkGgIq1xgZx4gl1H2dsN3J3rQVOH8Tm6hJrYzX8H9H6C+UnDXTJ9e7/GA+vX4xy99yKeL8afcChGNesrTYCyPh6ScDD33XJ+RdNMhqyuMNXqX1imn7U3Lg4TmwRKnoL2DfqsAwAld/VRDQIibmiThNpCfjceFhn22hmwJaymLmxfocwutc5sYsikymeIKgHt5DBDhM8+iDQU495sot/k0tzJrIfY0X2DmxqVICQZnWPeifz1zSsl+F+OFyLH4NqH7lPjve~4534835~4339014
+organization: JuniperD
+username: Zach
+JSESSIONID: NTdlZTM0NjEtYTAxNC00YTJmLTg2M2QtZDI1OTk3MzlmNDE1
 OrganizationID: 14189
 OrganizationAlias: JuniperD
 LocationID: 14000000000286
 LocationName: JuniperDentistry
 UserID: 14000000037002
 username: Zach
-JSESSIONID: NTM4MGU4YjUtZGNjYS00OTNkLTlmNGQtMWQ5YzE0YjVkYjQ0
-dtCookie: v_4_srv_5_sn_0BF92AA0E10D2CF94D525A6889C39F08_perc_100000_ol_0_mul_1_app-3A0ee0d180ab8d58ff_0_rcs-3Acss_0
-_abck: F9F8DCBA09083CA833069DD736DA25A8~-1~YAAQDCs0FwxMLbyTAQAAS/nEDw23mHQsN8fnA0yALl6383K1daVeA+6yj7x0jb8KyyNo81VH/m8GfXn2wOE9PWB+2ifhRDeUjWdRkSL+V+MYGrb1ab0bgDqY3eFT6yFL2/e568Cua3I3YiJm1agyxT4Ni4SNQkiMzsH3KHoqaiKUQAyCsa2QnXMjKUkUam9BpsVIWkXsBluxRZRR2dJEADUXF65/9Yq9HjM0NclG6VMWPCNvYu+odiNSVIiT/TDNNhBxRWDIrG2R7bffUYLR2eG1vHmyzCFWVLP1kDc5euYPECPaZvqD8jbflILPo78VmCTCLbgCLw3lLDKwSekqOSNtHQDUF5lGrDUbNKMI8cTHfQpmrhW6/6WGkqOm2edbUqbTSOIOmCfUzyQlGg4eXlxCgCod7I7pOiz1sWkh7LPVZ8t8~-1~-1~-1
-bm_sz: 00F9572282CCFD484C67249C403930C0~YAAQDCs0Fw1MLbyTAQAAS/nEDxpwsMUjIwECFavy4ZrDOBdT5MUNQnq4lUJJRhOerJrHb/nxfpO8K4TzsejKmc68zLN/ys2bJs/jiMRgq8/ItFbWMHA0M14MP8DeuxAOUcJ3NVQHazSCwm+XzcAhIdA097sliFqCfj2OWVVZFSsuTCXZUu0vONnwxJz5gUKclknRPcZ9G5+lbNm8kluVDVu6kW/CvtTzLL3vSd7GPf/IEx3fzguqlftUKuKO9gcTLiZx1dID1vKtD7JDDja7WpIKPX5k8LPCFKshxZ2XzrAsrSsDXnDfAjm6czUHg/E0cK9I51XtQA4NrqC//ca5Vi3exuHwOs33MohuhnnPKKAAqVCe~4474424~3621177
-JSESSIONID: NGQwNGI0MmItMjdmNi00NWI4LTg4ZGEtNDBlMmNhOTVlY2Zm
-
-Hardcoded Cookie:
-dtCookie: v_4_srv_9_sn_4E5D27D7FB0D0DAC9C3D5185DB19C0C3_perc_100000_ol_0_mul_1_app-3A0ee0d180ab8d58ff_0_rcs-3Acss_0
-OrganizationID: 14189
-OrganizationAlias: JuniperD
-LocationID: 14000000000286
-LocationName: JuniperDentistry
-UserID: 14000000037002
-username: Zach
-JSESSIONID: NTM4MGU4YjUtZGNjYS00OTNkLTlmNGQtMWQ5YzE0YjVkYjQ0

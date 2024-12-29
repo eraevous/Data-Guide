@@ -1,27 +1,25 @@
 from api_client import APIClient
 from data_pull import fetch_aged_ar_report, fetch_statement_submission_report
-import json
-
-def load_config(config_file):
-    with open(config_file, 'r') as file:
-        config = json.load(file)
-    return config
+import sys
 
 def main():
-    # Load configuration
-    config = load_config('config.json')
+    if len(sys.argv) != 3:
+        print("Usage: main.py <username> <password>")
+        sys.exit(1)
+
+    username = sys.argv[1]
+    password = sys.argv[2]
 
     # Initialize API client with hardcoded cookie from separate JSON file
-    client = APIClient(login_url=config["login_url"], cookie_file="cookie.json")
+    client = APIClient(username=username, password=password)
+
+    # Perform initial login to retrieve elements of the return cookie
+    client.login()
 
     # Load or authenticate
     client.load_cookies()
     if not client.session.cookies:
-        client.login(
-            username=config["username"],
-            password=config["password"],
-            organization=config["organization"]
-        )
+        client.login()
 
     # Fetch reports
     fetch_statement_submission_report(client)
