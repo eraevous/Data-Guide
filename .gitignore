@@ -2,6 +2,7 @@
 data/raw/
 data/processed/
 data_pipeline/config.json
+data_pipeline/session_cookies.pkl
 
 # Optional: Ignore all .csv files
 *.csv
