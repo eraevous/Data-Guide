@@ -1,0 +1,27 @@
+Headers:
+Content-Type: text/html;charset=UTF-8
+X-OneAgent-JS-Injection: true
+Timing-Allow-Origin: *
+Server-Timing: dtRpid;desc="1703188230", dtTao;desc="1", dtSInfo;desc="0"
+Vary: Origin, Access-Control-Request-Method, Access-Control-Request-Headers, Accept-Encoding
+X-XSS-Protection: 1; mode=block
+X-Frame-Options: SAMEORIGIN
+Referrer-Policy: same-origin
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Content-Type-Options: nosniff
+Content-Security-Policy: script-src 'nonce-NzZkOTc1NmJkMGVhMmYyYTUzZWNjYmUxY2ZiMTNkOTY=' 'self' 'strict-dynamic' https://live6.dentrixascend.com/; script-src-elem 'nonce-NzZkOTc1NmJkMGVhMmYyYTUzZWNjYmUxY2ZiMTNkOTY=' 'self' https://live6.dentrixascend.com/; script-src-attr 'nonce-NzZkOTc1NmJkMGVhMmYyYTUzZWNjYmUxY2ZiMTNkOTY=' 'self' https://live6.dentrixascend.com/; object-src 'self'; base-uri https://live6.dentrixascend.com/; report-uri https://live6.dentrixascend.com/; form-action 'nonce-NzZkOTc1NmJkMGVhMmYyYTUzZWNjYmUxY2ZiMTNkOTY=' 'self' https://live6.dentrixascend.com/ https://*.okta.com/ https://login.microsoftonline.com/; frame-ancestors 'self' https://live6.dentrixascend.com/;
+Content-Language: en-US
+X-Akamai-Transformed: 9 - 0 pmb=mTOE,1
+Content-Encoding: gzip
+Expires: Sun, 29 Dec 2024 01:12:14 GMT
+Cache-Control: max-age=0, no-cache, no-store
+Pragma: no-cache
+Date: Sun, 29 Dec 2024 01:12:14 GMT
+Content-Length: 2640
+Connection: keep-alive
+
+Cookies:
+dtCookie: v_4_srv_5_sn_0BF92AA0E10D2CF94D525A6889C39F08_perc_100000_ol_0_mul_1_app-3A0ee0d180ab8d58ff_0_rcs-3Acss_0
+_abck: F9F8DCBA09083CA833069DD736DA25A8~-1~YAAQDCs0FwxMLbyTAQAAS/nEDw23mHQsN8fnA0yALl6383K1daVeA+6yj7x0jb8KyyNo81VH/m8GfXn2wOE9PWB+2ifhRDeUjWdRkSL+V+MYGrb1ab0bgDqY3eFT6yFL2/e568Cua3I3YiJm1agyxT4Ni4SNQkiMzsH3KHoqaiKUQAyCsa2QnXMjKUkUam9BpsVIWkXsBluxRZRR2dJEADUXF65/9Yq9HjM0NclG6VMWPCNvYu+odiNSVIiT/TDNNhBxRWDIrG2R7bffUYLR2eG1vHmyzCFWVLP1kDc5euYPECPaZvqD8jbflILPo78VmCTCLbgCLw3lLDKwSekqOSNtHQDUF5lGrDUbNKMI8cTHfQpmrhW6/6WGkqOm2edbUqbTSOIOmCfUzyQlGg4eXlxCgCod7I7pOiz1sWkh7LPVZ8t8~-1~-1~-1
+bm_sz: 00F9572282CCFD484C67249C403930C0~YAAQDCs0Fw1MLbyTAQAAS/nEDxpwsMUjIwECFavy4ZrDOBdT5MUNQnq4lUJJRhOerJrHb/nxfpO8K4TzsejKmc68zLN/ys2bJs/jiMRgq8/ItFbWMHA0M14MP8DeuxAOUcJ3NVQHazSCwm+XzcAhIdA097sliFqCfj2OWVVZFSsuTCXZUu0vONnwxJz5gUKclknRPcZ9G5+lbNm8kluVDVu6kW/CvtTzLL3vSd7GPf/IEx3fzguqlftUKuKO9gcTLiZx1dID1vKtD7JDDja7WpIKPX5k8LPCFKshxZ2XzrAsrSsDXnDfAjm6czUHg/E0cK9I51XtQA4NrqC//ca5Vi3exuHwOs33MohuhnnPKKAAqVCe~4474424~3621177
+JSESSIONID: NGQwNGI0MmItMjdmNi00NWI4LTg4ZGEtNDBlMmNhOTVlY2Zm

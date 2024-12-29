@@ -9,7 +9,11 @@ class APIClient:
     def __init__(self, login_url):
         self.login_url = login_url
         self.session = requests.Session()
-        self.headers = {"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"}
+        self.headers = {
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "Referer": "https://live6.dentrixascend.com/",
+            "Origin": "https://live6.dentrixascend.com"
+        }
 
     def save_cookies(self):
         with open(self.COOKIE_FILE, 'wb') as file:
@@ -28,28 +32,51 @@ class APIClient:
             "password": password
         }
         response = self.session.post(self.login_url, data=payload, headers=self.headers)
+        print(response.headers)
         if response.status_code == 200:
             print("Login successful.")
+            print(self.session.cookies)
             self.save_cookies()
         else:
             raise Exception(f"Login failed: {response.text}")
 
     def make_request(self, url, method="GET", params=None, payload=None):
-        if method == "GET":
-            response = self.session.get(url, headers=self.headers, params=params)
-        elif method == "POST":
-            response = self.session.post(url, headers=self.headers, json=payload)
-        else:
-            raise ValueError("Unsupported HTTP method")
-
-        print(f"{method} {url} - Status Code: {response.status_code}")
-        print(f"Response Headers: {response.headers}")
-        print(f"Response Content: {response.text}")
-
-        if response.status_code != 200:
-            raise Exception(f"Request failed: {response.status_code}, {response.text}")
-
+        """
+        Perform a GET or POST request with the current session, reauthenticating if needed.
+        """
         try:
-            return response.json()
-        except ValueError:
-            raise Exception("Invalid JSON response")
+            if method == "GET":
+                response = self.session.get(url, headers=self.headers, params=params)
+            elif method == "POST":
+                response = self.session.post(url, headers=self.headers, json=payload)
+            else:
+                raise ValueError("Unsupported HTTP method.")
+
+            print(f"{method} {url} - Status Code: {response.status_code}")
+            print(f"Response Headers: {response.headers}")
+            print(f"Response Content: {response.text}")
+
+            # Output headers and cookies to a text file for debugging
+            with open("debug_output.txt", "w") as file:
+                file.write("Headers:\n")
+                for key, value in response.headers.items():
+                    file.write(f"{key}: {value}\n")
+                file.write("\nCookies:\n")
+                for key, value in self.session.cookies.items():
+                    file.write(f"{key}: {value}\n")
+
+            # Check if response is valid JSON
+            try:
+                return response.json()
+            except requests.exceptions.JSONDecodeError:
+                # Handle redirection to login
+                if "Login" in response.text or response.status_code == 401:
+                    print("Session expired or invalid. Reauthenticating...")
+                    self.login(organization="JuniperD", username="Zach", password="Rocky7996^")
+                    return self.make_request(url, method, params, payload)
+                else:
+                    raise Exception("Invalid JSON response or unexpected content.")
+
+        except Exception as e:
+            print(f"Request failed: {e}")
+            raise
