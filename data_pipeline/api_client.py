@@ -1,8 +1,7 @@
-# data_pipeline/api_client.py
-
 import requests
 import pickle
 import os
+import json
 
 class APIClient:
     COOKIE_FILE = "session_cookies.pkl"
@@ -34,3 +33,23 @@ class APIClient:
             self.save_cookies()
         else:
             raise Exception(f"Login failed: {response.text}")
+
+    def make_request(self, url, method="GET", params=None, payload=None):
+        if method == "GET":
+            response = self.session.get(url, headers=self.headers, params=params)
+        elif method == "POST":
+            response = self.session.post(url, headers=self.headers, json=payload)
+        else:
+            raise ValueError("Unsupported HTTP method")
+
+        print(f"{method} {url} - Status Code: {response.status_code}")
+        print(f"Response Headers: {response.headers}")
+        print(f"Response Content: {response.text}")
+
+        if response.status_code != 200:
+            raise Exception(f"Request failed: {response.status_code}, {response.text}")
+
+        try:
+            return response.json()
+        except ValueError:
+            raise Exception("Invalid JSON response")

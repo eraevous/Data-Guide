@@ -1,46 +1,38 @@
 import pandas as pd
 
-class DataPull:
-    @staticmethod
-    def get_data(client, urls, params, output_file):
-        data_frames = []
-        for url in urls:
-            response = client.session.get(url, headers=client.headers, params=params)
-            if response.status_code == 200:
-                data = response.json().get("data", [])
-                if data:
-                    df = pd.json_normalize(data)
-                    data_frames.append(df)
-                else:
-                    print(f"No data found for URL: {url}")
-            else:
-                raise Exception(f"GET request failed for URL {url}: {response.status_code}, {response.text}")
-        
-        if data_frames:
-            combined_df = pd.concat(data_frames, ignore_index=True)
-            combined_df.to_csv(output_file, index=False)
-            print(f"GET data saved to {output_file}.")
-        else:
-            print("No data to save.")
+def fetch_aged_ar_report(client):
+    """
+    Fetch the Aged AR Report using a POST request.
+    """
+    url = "https://live6.dentrixascend.com/agedARReport"
+    payload = {
+        "location": "14000000000286",
+        "dateRange": {"from": "2024-01-01", "to": "2024-12-31"},
+        "filters": {"minBalance": 0},
+        "groupBy": "provider",
+        "rows": 10000
+    }
+    data = client.make_request(url, method="POST", payload=payload)
+    # Save to CSV
+    pd.json_normalize(data).to_csv("aged_ar_report.csv", index=False)
+    print("Aged AR Report saved to aged_ar_report.csv")
 
-    @staticmethod
-    def post_data(client, urls, payload, output_file):
-        data_frames = []
-        for url in urls:
-            response = client.session.post(url, headers=client.headers, json=payload)
-            if response.status_code == 200:
-                data = response.json().get("data", [])
-                if data:
-                    df = pd.json_normalize(data)
-                    data_frames.append(df)
-                else:
-                    print(f"No data found for URL: {url}")
-            else:
-                raise Exception(f"POST request failed for URL {url}: {response.status_code}, {response.text}")
-        
-        if data_frames:
-            combined_df = pd.concat(data_frames, ignore_index=True)
-            combined_df.to_csv(output_file, index=False)
-            print(f"POST data saved to {output_file}.")
-        else:
-            print("No data to save.")
+def fetch_statement_submission_report(client):
+    """
+    Fetch the Statement Submission Report using a GET request.
+    """
+    url = "https://live6.dentrixascend.com/statementSubmissionReport"
+    params = {
+        "location": "14000000000286",
+        "dateTimeFrom": "0",
+        "dateTimeTo": "9999999999999",
+        "deliveryMethod": "ELECTRONIC",
+        "from": "1",
+        "rows": "10000",
+        "field": "dateTime",
+        "order": "desc"
+    }
+    data = client.make_request(url, method="GET", params=params)
+    # Save to CSV
+    pd.json_normalize(data).to_csv("statement_submission.csv", index=False)
+    print("Statement Submission Report saved to statement_submission.csv")
