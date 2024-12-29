@@ -60,8 +60,10 @@ class APIClient:
                 raise ValueError("Unsupported HTTP method.")
 
             print(f"{method} {url} - Status Code: {response.status_code}")
-            print(f"Response Headers: {response.headers}")
-            print(f"Response Content: {response.text}")
+
+            # Debugging: Print response headers and content
+            #print(f"Response Headers: {response.headers}")
+            #print(f"Response Content: {response.text}")
 
             # Output headers and cookies to a text file for debugging
             with open("debug_output.txt", "w") as file:
