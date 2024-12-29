@@ -33,7 +33,7 @@ def fetch_statement_submission_report(client):
     Fetch the Statement Submission Report using a GET request.
     """
     url = "https://live6.dentrixascend.com/statementSubmissionReport"
-    params = {
+    params1 = {
         "location": "14000000000286",
         "dateTimeFrom": "0",
         "dateTimeTo": "9999999999999",
@@ -43,7 +43,26 @@ def fetch_statement_submission_report(client):
         "field": "dateTime",
         "order": "desc"
     }
-    data = client.make_request(url, method="GET", params=params)
+
+    params2, params3 = params1.copy(), params1.copy()
+    params2["deliveryMethod"] = "MAIL_FOR_ME"
+    params3["deliveryMethod"] = "PRINT"
+
+    data1 = client.make_request(url, method="GET", params=params1)
+    data2 = client.make_request(url, method="GET", params=params2)
+    data3 = client.make_request(url, method="GET", params=params3)
+
+    # Convert to dataframes and add source column
+    df1 = pd.json_normalize(data1)
+    df1["source"] = "ELECTRONIC"
+    df2 = pd.json_normalize(data2)
+    df2["source"] = "MAIL_FOR_ME"
+    df3 = pd.json_normalize(data3)
+    df3["source"] = "PRINT"
+
+    # Concatenate dataframes
+    combined_df = pd.concat([df1, df2, df3], ignore_index=True)
+
     # Save to CSV
-    pd.json_normalize(data).to_csv("statement_submission.csv", index=False)
+    combined_df.to_csv("statement_submission.csv", index=False)
     print("Statement Submission Report saved to statement_submission.csv")

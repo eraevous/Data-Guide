@@ -6,9 +6,10 @@ import json
 class APIClient:
     COOKIE_FILE = "session_cookies.pkl"
 
-    def __init__(self, login_url, cookie_file="cookie.json"):
+    def __init__(self, login_url, cookie_file="cookie.json", config_file="config.json"):
         self.login_url = login_url
         self.cookie_file = cookie_file
+        self.config_file = config.file
         self.session = requests.Session()
         self.headers = {
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
@@ -16,19 +17,24 @@ class APIClient:
             "Origin": "https://live6.dentrixascend.com"
         }
         self.hardcoded_cookie = self.load_cookie_from_json()
+        self.set_cookies_from_dict(self.hardcoded_cookie)
 
     def load_cookie_from_json(self):
         """Load the hardcoded cookie from a JSON dictionary."""
         if os.path.exists(self.cookie_file):
             with open(self.cookie_file, "r") as file:
                 data = json.load(file)
-                # Convert key-value pairs to cookie string
-                cookie = "; ".join([f"{key}={value}" for key, value in data.items()])
                 print("Loaded hardcoded cookie from JSON dict.")
-                return cookie
+                return data
         else:
             print(f"Cookie file {self.cookie_file} not found.")
             return None
+
+    def set_cookies_from_dict(self, cookies):
+        """Set cookies from a dictionary."""
+        if cookies:
+            for key, value in cookies.items():
+                self.session.cookies.set(key, value)
 
     def save_cookies(self):
         """Save session cookies to a local file."""
@@ -66,10 +72,6 @@ class APIClient:
         Perform a GET or POST request with the current session, reauthenticating if needed.
         """
         try:
-            # Use hardcoded cookie from JSON as a fallback
-            if self.hardcoded_cookie:
-                self.headers["Cookie"] = self.hardcoded_cookie
-
             if method == "GET":
                 response = self.session.get(url, headers=self.headers, params=params)
             elif method == "POST":
@@ -91,7 +93,8 @@ class APIClient:
                     file.write(f"{key}: {value}\n")
                 if self.hardcoded_cookie:
                     file.write("\nHardcoded Cookie:\n")
-                    file.write(self.hardcoded_cookie)
+                    for key, value in self.hardcoded_cookie.items():
+                        file.write(f"{key}: {value}\n")
 
             # Check if response is valid JSON
             try:

@@ -1,0 +1,214 @@
+<!DOCTYPE HTML>
+<html class='seasoned-background winter'>
+
+<head>
+    <title>Dentrix Ascend - Login</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=9" />
+    <script type="text/javascript" src="/ruxitagentjs_ICA7NQVfhqrux_10303241106123517.js"
+        data-dtconfig="app=0ee0d180ab8d58ff|featureHash=ICA7NQVfhqrux|msl=153600|srsr=1000|rdnt=1|uxrgce=1|cuc=2xfmscmc|srms=2,2,1,|mel=100000|dpvc=1|md=mdcc1=cusername,mdcc2=cOrganizationAlias|lastModification=1734547734309|tp=500,50,0|agentUri=/ruxitagentjs_ICA7NQVfhqrux_10303241106123517.js|reportUrl=/rb_bf72032dsy|rid=RID_1119733372|rpid=-1689530300|domain=dentrixascend.com">
+    </script>
+    <link rel="shortcut icon" href="/assets/favicon_ascend-ee4780bbed98261ab99e2c50380be491.ico" type="image/x-icon" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <link rel="preconnect" href="https://d3dn5e5ss95y9g.cloudfront.net" />
+
+    <link href="/assets/UI-login.css" rel="stylesheet" />
+    <link href="/assets/ascendBootstrap.css" rel="stylesheet" />
+    <script type="text/javascript" src="/assets/object-assign-auto.min.js"></script>
+    <script type="text/javascript" src="/assets/AscendLibs.min.js"></script>
+
+    <meta name="layout" content="mainForm" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link rel="apple-touch-icon-precomposed" href="/assets/apple-touch-icon-retina-96edd554a5cf4274426901a05b8c4757.png"
+        type="image/x-icon" />
+
+
+
+    <script nonce="YzgxNWY1OWQ2NWVlNTljOWZkNDE5NDhkNGI0MDEwYTc=">
+        var allowIE = false,
+            warning = "You have arrived at the Dentrix Ascend login page via an unsecure link.  Please check that the website URL matches the following before attempting to log in: https://live6.dentrixascend.com/login",
+            error = "",
+            redirectRules = [];
+    </script>
+
+    <script nonce="YzgxNWY1OWQ2NWVlNTljOWZkNDE5NDhkNGI0MDEwYTc=" type="text/javascript" src="/assets/login.js"></script>
+
+</head>
+
+<body class="login ">
+
+    <div id="message" class="alert"></div>
+
+    <div id="loginPanel_outer">
+        <div id="detectAI-logo"></div>
+
+        <div id="loginPanel">
+            <div id="session">
+
+            </div>
+
+
+            <div id="loginLogo"></div>
+
+
+
+
+
+            <form action="/login/authenticate" method="post" id="login-form" class="migratedToBS4">
+                <legend style="">Login</legend>
+
+
+                <div class="form-horizontal">
+                    <div class="control-group">
+                        <label class="control-label" for="organization">
+                    Organization
+                    <img src="assets/error.svg" class="errorIcon" title="This field is required"/>
+                </label>
+
+                        <div class="controls">
+                            <input type="text" name="organization" id="organization" class="loginField" value="JuniperD" autocapitalize="off" autocorrect="off" />
+                        </div>
+                    </div>
+
+
+                    <div class="control-group">
+                        <label class="control-label" for="username">
+            Username
+            <img src="assets/error.svg" class="errorIcon" title="This field is required"/>
+        </label>
+
+                        <div class="controls">
+                            <input type="text" name="username" id="username" class="loginField" value="Zach" autocapitalize="off" autocorrect="off" />
+                            <input type="hidden" name="username_escaped" id="username_escaped" class="loginField" autocapitalize="off" autocorrect="off" value="" />
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label" for="password">
+            Password
+            <img src="assets/error.svg" class="errorIcon" title="This field is required"/>
+        </label>
+
+                        <div class="controls">
+
+                            <input type="password" name="password" id="password" autocomplete="off" value="" />
+
+                            <a href="/forgotPassword/create" id="forgot" class="forgotPassword" autocapitalize="off"
+                                autocorrect="off">Forgot Password?</a>
+                        </div>
+                    </div>
+
+                    <div id="capsLockAlert" class="alert alert-block">
+                        <div class="warning-sign"></div>CAPS LOCK is on.
+                    </div>
+
+                    <div class="form-actions">
+                        <br>
+                        <input type="submit" name="send" id="send" class="btn btn-primary btn-large" value="Log In" />
+                    </div>
+
+                </div>
+            </form>
+            <script nonce="YzgxNWY1OWQ2NWVlNTljOWZkNDE5NDhkNGI0MDEwYTc=">
+                function setSubmitUrl(form) {
+        $('#organization').val($('#organization').val().split(' ').join(''));
+        var hash = decodeURIComponent(self.document.location.hash.substring(1));
+        form.action = "login/authenticate";
+
+        if (hash !== "") {
+            form.action += "#" + hash;
+        }
+
+        sessionStorage.setItem('lastHistoryFragment', location.hash.substring(2));
+
+        $(form).find('#username_escaped').val(
+            $('form').find('#username').val()
+        );
+
+        return true;
+    }
+
+            </script>
+            <script nonce="YzgxNWY1OWQ2NWVlNTljOWZkNDE5NDhkNGI0MDEwYTc=">
+                const form = document.getElementById("login-form");
+    form.addEventListener("submit", setSubmitUrl);
+            </script>
+
+
+            <div id="upgradeBrowser" class="migratedToBS4" style="display:none;">
+                <div class="panel">
+
+                    <legend>Unsupported Browser</legend>
+
+                    <p>Please upgrade your browser to one of the supported browsers below.</p>
+                    <br>
+
+                    <div class="supportedBrowsers">
+                        <div class="browserContainer chromeBrowser">
+                            <a href="https://www.google.com/intl/en/chrome/" target="_blank">
+                                <div class="browserIcon chrome"></div>
+                                <div class="browserType">
+                                    <span class="chromeType">Chrome</span>
+                                </div>
+                            </a>
+                            <div class="systemType">
+                                <span class="chromeType">
+                        Used on:<br>
+                        PC/Mac/iPad/Surface
+                    </span>
+                            </div>
+                        </div>
+
+                        <div class="browserContainer safariBrowser">
+                            <div class="browserIcon safari"></div>
+                            <div class="browserType">Safari</div>
+                            <div class="systemType">
+                                Used on:<br>
+                    iPad
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="clear"></div>
+                    <br>
+
+                    <div class="loginLink">
+
+                        <div class="backLoginLink">
+                            <a href="javascript:void(0)" onclick="backToLogin()">Back to Login</a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div id="offlineMessage" class="migratedToBS4" style="display:none;">
+                <legend>Error Connecting</legend>
+
+                <p>Please make sure you have an internet connection and try again.</p>
+                <a href="javascript:void(0)" onClick="window.location.reload()">Reload Page</a>
+            </div>
+
+            <div id="HSOne_logo"></div>
+
+
+        </div>
+
+        <section id="detectAI-promo">
+            <h1>Transform Patient Care with Artificial Intelligence</h1>
+            <p class="promo-body">
+                <strong>Dentrix Ascend Detect AI</strong>, powered and manufactured by Videa Health, is a tool for you
+                to drive patient trust and increase preventative care.
+                It's now available right within Dentrix Ascend.
+            </p>
+            <footer class="promo-footer">
+                <h3>Activate your free trial today!</h3>
+                <a href="https://www.dentrixascend.com/ai-login" target="_blank"
+                    title="Dentrix Ascend AI Login">DentrixAscend.com/ai-login</a>
+            </footer>
+        </section>
+    </div>
+    <script type="text/javascript" src="/LXMKX2hAD2eR/iI/LKa6zUnidR/YrY76kJptQp6L1m5/R3weTgo7RAE/Px/dgA1VoHUQB">
+    </script>
+</body>
+
+</html>
