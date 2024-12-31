@@ -73,7 +73,7 @@ def fetch_statement_submission_report(client, output_dir):
     print(df.head())
 
     # Save to CSV
-    output_path = os.path.join(output_dir, "statement_submission.csv")
+    output_path = os.path.join(output_dir, "statement_submission_report.csv")
     df.to_csv(output_path, index=False)
     print(f"Statement Submission Report saved to {output_path}")
 

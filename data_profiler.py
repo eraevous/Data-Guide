@@ -4,7 +4,7 @@ from scipy.stats import entropy
 import matplotlib.pyplot as plt
 import seaborn as sns
 import missingno as msno
-import phonenumbers
+#import phonenumbers
 
 class DataProfiler:
     """
@@ -103,7 +103,7 @@ class DataProfiler:
             except Exception as e:
                 self.results["columns"][column] = {"error": str(e)}
     
-    def generate_report(self, format='markdown'):
+    def generate_report(self, format='markdown', dataset="Dataset"):
         """
         Generates a report in the specified format (markdown, HTML, or CSV).
         
@@ -114,7 +114,7 @@ class DataProfiler:
             str: The generated report.
         """
         if format == 'markdown':
-            return self._generate_markdown_report()
+            return self._generate_markdown_report(dataset)
         elif format == 'html':
             return self._generate_html_report()
         elif format == 'csv':
@@ -122,10 +122,10 @@ class DataProfiler:
         else:
             raise ValueError("Unsupported format: {}".format(format))
     
-    def _generate_markdown_report(self):
+    def _generate_markdown_report(self, dataset):
         # Implement markdown report generation
-        report = "# Data Profile Report\n\n"
-        report += "## Dataset Metadata\n"
+        report = f"# Data Profile Report for {dataset}\n\n"
+        report += f"## {dataset} Metadata\n"
         for key, value in self.results["dataset_metadata"]["metadata"].items():
             report += f"- **{key}**: {value}\n"
         report += "\n## Duplicate Analysis\n"
@@ -238,8 +238,8 @@ def profile_column_as_numeric(df, column):
     """
     col_data = df[column]
     stats = col_data.describe().to_dict()
-    most_common = col_data.value_counts().head(10).to_dict()
-    least_common = col_data.value_counts().tail(10).to_dict()
+    most_common = col_data.value_counts().head(10).round(2).to_dict()
+    least_common = col_data.value_counts().tail(10).round(2).to_dict()
     return {
         "statistics": stats,
         "most_common": most_common,
