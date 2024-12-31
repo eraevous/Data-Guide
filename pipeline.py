@@ -1,30 +1,73 @@
 import pandas as pd
-from data_profiler import DataProfiler
+import os
+from profiler import DataProfiler
 from data_transform import DataTransform
 
+def load_csv_files(file_paths):
+    dataframes = {}
+    for file_path in file_paths:
+        df_name = os.path.basename(file_path).replace(".csv", "")
+        dataframes[df_name] = pd.read_csv(file_path)
+    return dataframes
+
+def save_report(report, output_dir, file_name):
+    with open(os.path.join(output_dir, file_name), "w") as f:
+        f.write(report)
+
 if __name__ == "__main__":
-    # Load dataset
-    df_raw = pd.DataFrame({
-        "Name": ["Alice", "Bob", "Charlie", "Bob", "Alice"],
-        "Age": [25, 30, 35, 30, 25],
-        "JoinDate": ["2022-01-01", "2022-02-15", "2022-03-10", "2022-02-15", "2022-01-01"]
-    })
+    # Define CSV files, custom types, and output directory
+    input_dir = "C:/Users/Admin/Documents/GitHub/Data-Guide/pull_dec_29/"
 
-    # Step 1: Profile raw data
-    print("Profiling raw data...")
-    profiler = DataProfiler(df_raw, custom_types={"JoinDate": "date"})
-    profiler.profile_dataset()
-    profiler.generate_report("raw_data_profile.md")
+    csv_files = {
+        "aged_AR" : os.path.join(input_dir, "pull_dec_29/aged_ar_report.csv"),
+        "statement_submission" : os.path.join(input_dir, "pull_dec_29/statement_submission_report.csv"),
+        #"integrated_payments" : os.path.join(input_dir, "pull_dec_29/integrated_payments_report.csv"),
+        #"os.path.join(input_dir, "pull_dec_29/billing_statement_report.csv"),
+        #"os.path.join(input_dir, "pull_dec_29/outstanding_claims_report.csv"),
+        #"os.path.join(input_dir, "pull_dec_29/unresolved_claims_report.csv"),
+        "patient_list" : os.path.join(input_dir, "pull_dec_29/ZR - Patient List with Details.csv"),
+        #"os.path.join(input_dir, "pull_dec_29/ZR - Credit Card Processed Payments.csv"),
+        #"os.path.join(input_dir, "pull_dec_29/ZR - Transaction Detail.csv"),
+        #"os.path.join(input_dir, "pull_dec_29/ZR - Treatment Tracker.csv"),
+    }
+    custom_types = {
+        "aged_AR": {"id" : "id", "phoneNumber": "phone_number", "billingStatement":"id", 
+        "lastPayment.datedAs" : "unix_timestamp"},
+        "statement_submission": {"id": "id", "dateTime" : "unix_timestamp", "patientId": "id"},
+        "patient_list": {"Ascend Patient ID": "id", "Phone" : "phone_number", "Date of Birth": "date", "Prim. Subscriber ID": "id",
+        "Address": "address", "Email": "email"},
+    }
 
-    # Step 2: Transform data
-    print("Transforming data...")
-    df_cleaned = DataTransform.handle_nulls(df_raw, strategy="fill", fill_value="Unknown")
-    df_cleaned = DataTransform.convert_dates(df_cleaned, ["JoinDate"])
+    output_dir = "C:/Users/Admin/Documents/GitHub/Data-Guide/pull_dec_29/profiles"
 
-    # Step 3: Profile transformed data
-    print("Profiling transformed data...")
-    transformed_profiler = DataProfiler(df_cleaned)
-    transformed_profiler.profile_dataset()
-    transformed_profiler.generate_report("transformed_data_profile.md")
+    # Ensure the output directory exists
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    # Load datasets
+    dataframes = load_csv_files(csv_files)
+
+    for df_name, df in dataframes.items():
+        print(f"Processing {df_name}...")
+
+        # Step 1: Profile raw data
+        print("Profiling raw data...")
+        profiler = DataProfiler(df, custom_types=custom_types.get(df_name, {}))
+        profiler.profile_dataset()
+        raw_report = profiler.generate_report("markdown", f"{df_name} raw data")
+        save_report(raw_report, output_dir, f"{df_name}_raw_data_profile.md")
+
+        # # Step 2: Transform data
+        # print("Transforming data...")
+        # df_cleaned = DataTransform.handle_nulls(df, strategy="fill", fill_value="Unknown")
+        # date_columns = [col for col, dtype in custom_types.get(df_name, {}).items() if dtype == "date"]
+        # df_cleaned = DataTransform.convert_dates(df_cleaned, date_columns)
+
+        # # Step 3: Profile transformed data
+        # print("Profiling transformed data...")
+        # transformed_profiler = DataProfiler(df_cleaned)
+        # transformed_profiler.profile_dataset()
+        # transformed_report = transformed_profiler.generate_report("markdown", f"{df_name} transformed data")
+        # save_report(transformed_report, output_dir, f"{df_name}_transformed_data_profile.md")
 
     print("Pipeline execution complete.")
