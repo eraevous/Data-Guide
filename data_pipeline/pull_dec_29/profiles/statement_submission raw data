@@ -1,0 +1,16 @@
+# Data Profile Report
+
+## Metadata
+- **row_count**: 2506
+- **column_count**: 9
+- **missing_values**: 0
+- **duplicates**: 0
+
+## Missing Value Matrix
+![Missing Value Matrix](plots/missing_value_matrix.png)
+
+## Temporal Analysis
+
+## Numeric Columns
+
+## String Columns

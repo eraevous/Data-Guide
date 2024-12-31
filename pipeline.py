@@ -3,7 +3,7 @@ import os
 from profiler import DataProfiler
 from data_transform import DataTransform
 
-def load_csv_files(file_paths):
+def load_csv_files(name, path):
     dataframes = {}
     for file_path in file_paths:
         df_name = os.path.basename(file_path).replace(".csv", "")
@@ -16,7 +16,7 @@ def save_report(report, output_dir, file_name):
 
 if __name__ == "__main__":
     # Define CSV files, custom types, and output directory
-    input_dir = "C:/Users/Admin/Documents/GitHub/Data-Guide/pull_dec_29/"
+    input_dir = "C:/Users/Admin/Documents/GitHub/Data-Guide/data_pipeline/"
 
     csv_files = {
         "aged_AR" : os.path.join(input_dir, "pull_dec_29/aged_ar_report.csv"),
@@ -31,31 +31,33 @@ if __name__ == "__main__":
         #"os.path.join(input_dir, "pull_dec_29/ZR - Treatment Tracker.csv"),
     }
     custom_types = {
-        "aged_AR": {"id" : "id", "phoneNumber": "phone_number", "billingStatement":"id", 
-        "lastPayment.datedAs" : "unix_timestamp"},
-        "statement_submission": {"id": "id", "dateTime" : "unix_timestamp", "patientId": "id"},
-        "patient_list": {"Ascend Patient ID": "id", "Phone" : "phone_number", "Date of Birth": "date", "Prim. Subscriber ID": "id",
+        "aged_AR": {"id": "id", "phoneNumber": "phone_number", "billingStatement": "id", 
+        "lastPayment.datedAs": "unix_timestamp"},
+        "statement_submission": {"id": "id", "dateTime": "unix_timestamp", "patient.id": "id"},
+        "patient_list": {"Ascend Patient ID": "id", "Phone": "phone_number", "Date of Birth": "date", "Prim. Subscriber ID": "id",
         "Address": "address", "Email": "email"},
     }
 
-    output_dir = "C:/Users/Admin/Documents/GitHub/Data-Guide/pull_dec_29/profiles"
+    output_dir = "C:/Users/Admin/Documents/GitHub/Data-Guide/data_pipeline/pull_dec_29/profiles"
 
     # Ensure the output directory exists
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
     # Load datasets
-    dataframes = load_csv_files(csv_files)
+    dataframes = {dataset: pd.read_csv(file_path) for dataset, file_path in csv_files.items()}
 
     for df_name, df in dataframes.items():
         print(f"Processing {df_name}...")
 
+        print(df.head())
+
         # Step 1: Profile raw data
         print("Profiling raw data...")
-        profiler = DataProfiler(df, custom_types=custom_types.get(df_name, {}))
+        profiler = DataProfiler(df, custom_types=custom_types.get(df_name, {}), output_dir=output_dir)
         profiler.profile_dataset()
-        raw_report = profiler.generate_report("markdown", f"{df_name} raw data")
-        save_report(raw_report, output_dir, f"{df_name}_raw_data_profile.md")
+        raw_report = profiler.generate_report("markdown", f"{df_name} raw data.md")
+        #save_report(raw_report, output_dir, f"{df_name}_raw_data_profile.md")
 
         # # Step 2: Transform data
         # print("Transforming data...")

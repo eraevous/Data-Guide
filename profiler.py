@@ -4,26 +4,43 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import missingno as msno
 from scipy.stats import entropy
+import os
 
 class DataProfiler:
     def __init__(self, dataframe, custom_types=None, output_dir="."):
         self.df = dataframe
         self.output_dir = output_dir
-        self.custom_types = custom_types or {col: str(self.df[col].dtype) for col in self.df.columns}
+        self.custom_types = custom_types
+        self._initialize_custom_types()
         self.results = {}
         self._preprocess_data()
+
+    def _initialize_custom_types(self):
+        """
+        Initialize the custom_types dictionary by merging provided types with defaults.
+        """
+        # Infer default types from the dataframe
+        default_types = {col: str(self.df[col].dtype) for col in self.df.columns}
+
+        # Merge provided custom_types with defaults
+        if self.custom_types:
+            self.custom_types = {**default_types, **self.custom_types}
+        else:
+            self.custom_types = default_types
+
 
     def _preprocess_data(self):
         """
         Apply custom data type mappings.
         """
+
         for column, dtype in self.custom_types.items():
             if dtype == 'phone_number':
                 self.df[column] = self.df[column].apply(self._parse_phone_number)
             elif dtype == 'id':
                 self.df[column] = self.df[column].astype(str)
             elif dtype == 'unix_timestamp':
-                self.df = self.convert_unix_timestamps(self.df, column, errors='coerce')
+                self.df = self.convert_unix_timestamps(self.df, column, in_milliseconds=True)
             elif dtype == 'date':
                 self.df[column] = pd.to_datetime(self.df[column], errors='coerce')
 
@@ -65,6 +82,7 @@ class DataProfiler:
             r"(?i)test",  # Case-insensitive 'test'
             r"(?i)none"  # Case-insensitive 'none'
         ]
+        empty_patterns = ['None', 'nan', '']
         suspicious_data = self._identify_invalid_patterns_regex(col_data, suspicious_patterns)
         special_characters = self._count_special_characters(col_data)
         entropy_value = entropy(col_data.value_counts(normalize=True), base=2)
@@ -115,7 +133,7 @@ class DataProfiler:
             "outliers": outliers.tolist()
         }
       
-    def profile_phone_numbers(df, phone_column):
+    def profile_phone_numbers(self, df, phone_column):
         valid_count = 0
         invalid_count = 0
         for number in df[phone_column]:
@@ -127,7 +145,7 @@ class DataProfiler:
                 invalid_count += 1
         return {"valid_phone_numbers": valid_count, "invalid_phone_numbers": invalid_count}
 
-    def profile_temporal_data(df):
+    def profile_temporal_data(self):
         """
         Profiles temporal data, providing insights into time coverage, gaps, and trends.
         
@@ -140,7 +158,7 @@ class DataProfiler:
         temporal_columns = [col for col, dtype in self.custom_types.items() if dtype == 'date']
         temporal_analysis = {}
         for column in temporal_columns:
-            col_data = df[column]
+            col_data = self.df[column]
             temporal_analysis[column] = {
                 "earliest": col_data.min(),
                 "latest": col_data.max(),
@@ -176,9 +194,9 @@ class DataProfiler:
         return suspicious_counts
 
     # Bar Chart: Categorical Variable
-    def bar_chart(data, column, output_path, top_n=10):
+    def bar_chart(self, column, output_path, top_n=10):
 
-        value_counts = data[column].value_counts()
+        value_counts = self.df[column].value_counts()
         top_values = value_counts.head(top_n)
         
         if len(value_counts) > top_n:
@@ -217,7 +235,7 @@ class DataProfiler:
         plt.close()
     
     # Missing Value Matrix
-    def missing_value_matrix(data):
+    def missing_value_matrix(self, output_path):
         msno.matrix(self.df)
         plt.title("Missing Value Matrix")
         plt.savefig(output_path)
@@ -227,13 +245,16 @@ class DataProfiler:
         """
         Generate dataset-level profiles.
         """
+        print(self.custom_types)
+
         metadata = {
             "row_count": len(self.df),
             "column_count": len(self.df.columns),
             "missing_values": self.df.isnull().sum().sum(),
             "duplicates": self.df.duplicated().sum()
         }
-        temporal_analyses = self.profile_temporal_data(self.df)
+        
+        temporal_analyses = self.profile_temporal_data()
 
         phone_profiles = {
             col: self.profile_phone_numbers(self.df, col)
@@ -250,6 +271,14 @@ class DataProfiler:
             for col, dtype in self.custom_types.items() if dtype in ['int64', 'float64', 'numeric']
         }
 
+        # Ensure the output directory exists
+        if not os.path.exists(self.output_dir):
+            os.makedirs(self.output_dir)
+
+        plots_dir = os.path.join(self.output_dir, "plots")
+        if not os.path.exists(plots_dir):
+            os.makedirs(plots_dir)
+
         # Generate missing value matrix
         self.missing_value_matrix(f"{self.output_dir}/plots/missing_value_matrix.png")
 
@@ -264,14 +293,14 @@ class DataProfiler:
             self.kde_plot(column, f"{self.output_dir}/plots/{column}_kde_plot.png")
             self.box_plot(column, f"{self.output_dir}/plots/{column}_boxplot.png")
 
-        self.results['temportal_analyses'] = temporal_analyses
+        self.results['temporal_analyses'] = temporal_analyses
         self.results['metadata'] = metadata
         self.results['string_profiles'] = string_profiles
         self.results['numeric_profiles'] = numeric_profiles
 
-    def generate_report(self, format='markdown', output_path="./data_profile.md"):
+    def generate_report(self, format='markdown', output_filename="data_profile.md"):
         if format == 'markdown':
-            return self._generate_markdown_report(output_path)
+            return self._generate_markdown_report(output_filename)
         elif format == 'html':
             return self._generate_html_report()
         elif format == 'csv':
@@ -291,7 +320,7 @@ class DataProfiler:
 
         # Missing value matrix
         report += "\n## Missing Value Matrix\n"
-        report += "![Missing Value Matrix](plots/missing_value_matrix.png)\n"
+        report += f"![Missing Value Matrix]({self.output_dir}/plots/missing_value_matrix.png)\n"
 
         report += "\n## Temporal Analysis\n"
         for column, analysis in self.results["temporal_analyses"].items():
@@ -309,9 +338,9 @@ class DataProfiler:
             report += f"- **Skewness**: {profile.get('skewness')}\n"
             report += f"- **Kurtosis**: {profile.get('kurtosis')}\n"
             report += f"- **Outliers**: {len(profile.get('outliers', []))} detected\n"
-            report += f"- ![Histogram](plots/{column}_histogram.png)\n"
-            report += f"- ![KDE Plot](plots/{column}_kde_plot.png)\n"
-            report += f"- ![Box Plot](plots/{column}_boxplot.png)\n"
+            report += f"![Histogram for {column}]({self.output_dir}/plots/{column}_histogram.png)\n"
+            report += f"![KDE Plot for {column}]({self.output_dir}/plots/{column}_kde_plot.png)\n"
+            report += f"![Box Plot for {column}]({self.output_dir}/plots/{column}_boxplot.png)\n"
 
         report += "\n## String Columns\n"
         string_profiles = self.results.get("string_profiles", {})
@@ -330,11 +359,15 @@ class DataProfiler:
             if suspicious:
                 report += f"- **Suspicious Data**: {suspicious}\n"
             report += f"- **Distinct Values**: {profile.get('distinct_values')}\n"
-            report += f"- ![Bar Chart](plots/{column}_barchart.png)\n"
+            report += f"![Bar Chart for {column}]({self.output_dir}/plots/{column}_barchart.png)\n"
 
         output_file = os.path.join(self.output_dir, output_filename)
+
         with open(output_file, "w") as file:
             file.write(report)
+            file.close()
+
+        return report
 
     def append_markdown_section(file_path, section_title, content):
         """
