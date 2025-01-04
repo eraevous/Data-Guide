@@ -5,7 +5,370 @@ import matplotlib.pyplot as plt
 import missingno as msno
 from scipy.stats import entropy
 import os
+import re
+import textwrap
 
+class DataProfilerPlots:
+    def __init__(self, df):
+        self.df = df
+
+    def _wrap_text(self, text, width=12):
+        """
+        Helper function to wrap text for axis labels and titles.
+        """
+        return "\n".join(textwrap.wrap(text, width))
+
+    def bar_chart(self, column, output_path, wrap_width=20, top_n=10):
+        #print("DEBUG: Column being plotted -", column)
+        
+        # Compute value counts
+        value_counts = self.df[column].value_counts()
+        other_count = value_counts.iloc[top_n:].sum() if len(value_counts) > top_n else 0
+        
+        # Create a dictionary for the top values and append 'Other'
+        top_values = value_counts.head(top_n).to_dict()
+        if other_count > 0:
+            top_values["Other"] = other_count
+        
+        # Convert to pandas Series for plotting
+        top_values_series = pd.Series(top_values)
+        #print("DEBUG: Top values for bar chart -", top_values_series)
+        
+        # Plot bar chart
+        ax = top_values_series.plot(kind='bar', color='skyblue')
+        ax.set_title(self._wrap_text(f"Bar Chart for {column}", wrap_width))
+        ax.set_xlabel(self._wrap_text(column, wrap_width))
+        ax.set_ylabel("Count")
+        # Increase bottom margin
+        #plt.subplots_adjust(bottom=0.1)  # Adjust the bottom margin
+        # Save the plot
+        plt.savefig(output_path)
+        plt.close()
+        #print(f"DEBUG: Bar chart saved at {output_path}")
+
+    # Histogram: Numerical Variable
+    def histogram(self, column, output_path, wrap_width=20):
+        ax = self.df[column].plot(kind="hist", bins=20, color="lightgreen", edgecolor="black")
+        ax.set_title(self._wrap_text(f"Histogram for {column}", wrap_width))
+        ax.set_xlabel(self._wrap_text(column, wrap_width))
+        ax.set_ylabel("Frequency")
+        #plt.subplots_adjust(bottom=0.1)  # Increase bottom margin
+        plt.savefig(output_path)
+        plt.close()
+
+    # KDE Plot
+    def kde_plot(self, column, output_path, wrap_width=20):
+        ax = sns.kdeplot(self.df[column], fill=True, color="blue")
+        ax.set_title(self._wrap_text(f"KDE Plot for {column}", wrap_width))
+        ax.set_xlabel(self._wrap_text(column, wrap_width))
+        ax.set_ylabel("Density")
+        #plt.subplots_adjust(bottom=0.1)  # Increase bottom margin
+        plt.savefig(output_path)
+        plt.close()
+
+    # Box Plot: Outliers and Spread
+    def box_plot(self, column, output_path, wrap_width=20):
+        ax = sns.boxplot(y=self.df[column], color="coral")
+        ax.set_title(self._wrap_text(f"Box Plot for {column}", wrap_width))
+        ax.set_ylabel(self._wrap_text(column, wrap_width))
+        #plt.subplots_adjust(bottom=0.1)  # Increase bottom margin
+        plt.savefig(output_path)
+        plt.close()
+
+    # Missing Value Matrix
+    def missing_value_matrix(self, output_path):
+        fig, ax = plt.subplots(figsize=(15, 10))  # Set larger dimensions for clarity
+        msno.matrix(self.df, ax=ax)
+        ax.set_title("Missing Value Matrix")
+        #plt.subplots_adjust(top=0.2, right=0.2)  # Adjust margins
+        plt.savefig(output_path)
+        plt.close()
+
+class TemporalAnalyzer:
+    def __init__(self, dataframe, output_dir, window=3):
+        self.df = dataframe
+        self.output_dir = output_dir
+        self.window = window
+
+    def analyze_temporal_column(self, column):
+        """
+        Perform temporal analysis for a single column.
+        """
+        col_data = self.df[column]
+        analysis = {
+            "earliest": col_data.min().strftime("%Y-%m-%d"),
+            "latest": col_data.max().strftime("%Y-%m-%d"),
+            "time_span": f"{(col_data.max() - col_data.min()).days} days",
+            "temporal_gaps": self._summarize_temporal_gaps(col_data),
+            "day_of_week_distribution": self._format_day_of_week_distribution(col_data.dt.dayofweek.value_counts().to_dict()),
+            "monthly_trends": self._format_monthly_trends(col_data.dt.month.value_counts().sort_index().to_dict())
+        }
+        self._plot_temporal_gaps_distribution(col_data, column)
+        self._plot_weekly_aggregate_time_series(col_data, column)
+        return analysis
+
+    def _summarize_temporal_gaps(self, col_data):
+        """
+        Summarize temporal gaps with human-friendly descriptions.
+        """
+        # Ensure the data is sorted chronologically
+        col_data = col_data.sort_values()
+        gaps = col_data.diff().describe()
+        summary = {
+            "count": int(gaps["count"]),
+            "mean": f"{gaps['mean'].days} days" if pd.notna(gaps["mean"]) else "N/A",
+            "std": f"{gaps['std'].days} days" if pd.notna(gaps["std"]) else "N/A",
+            "min": f"{gaps['min'].days} days" if pd.notna(gaps["min"]) else "N/A",
+            "25%": f"{gaps['25%'].days} days" if pd.notna(gaps["25%"]) else "N/A",
+            "50%": f"{gaps['50%'].days} days" if pd.notna(gaps["50%"]) else "N/A",
+            "75%": f"{gaps['75%'].days} days" if pd.notna(gaps["75%"]) else "N/A",
+            "max": f"{gaps['max'].days} days" if pd.notna(gaps["max"]) else "N/A"
+        }
+        return summary
+
+    def _format_day_of_week_distribution(self, day_of_week_counts):
+        """
+        Convert day-of-week counts to labels like Monday, Tuesday, etc.
+        """
+        day_labels = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        return {day_labels[int(k)]: v for k, v in day_of_week_counts.items()}
+
+    def _format_monthly_trends(self, monthly_counts):
+        """
+        Convert month numbers to names like January, February, etc.
+        """
+        month_labels = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        ]
+        return {month_labels[int(k) - 1]: v for k, v in monthly_counts.items()}
+
+    def _plot_temporal_gaps_distribution(self, col_data, column):
+        """
+        Plot histogram and KDE for temporal gaps.
+        """
+        # Ensure the data is sorted chronologically
+        col_data = col_data.sort_values()
+
+        column_name = re.sub(r'[^\w\-_]', '_', column)
+        column_name = re.sub(r'__+', '_', column_name)
+        temporal_gaps = col_data.diff().dropna()
+        plt.figure(figsize=(12, 6))
+        sns.histplot(temporal_gaps.dt.days, kde=True, color="blue", bins=30)
+        plt.title(f"Temporal Gaps Distribution for {column}")
+        plt.xlabel("Gap (days)")
+        plt.ylabel("Frequency")
+        plt.savefig(f"{self.output_dir}/{column_name}_temporal_gaps_distribution.png")
+        plt.close()
+
+    def _plot_weekly_aggregate_time_series(self, col_data, column):
+        """
+        Plot weekly aggregated time series.
+        """
+        window = self.window
+        column_name = re.sub(r'[^\w\-_]', '_', column)
+        column_name = re.sub(r'__+', '_', column_name)
+
+        # Compute weekly aggregated counts
+        weekly_counts = col_data.dt.to_period("W").value_counts().sort_index()
+
+        # Apply a moving average for smoothing
+        weekly_counts_smooth = weekly_counts.rolling(window=window, center=True).mean()
+
+        plt.figure(figsize=(14, 8))  # Increase figure size for better clarity
+
+        # Plot original data for context
+        plt.plot(
+            weekly_counts.index.to_timestamp(),
+            weekly_counts,
+            marker="o",
+            color="lightgray",
+            alpha=0.6,
+            label="Original Data",
+            linewidth=1
+        )
+
+        # Plot the smoothed moving average
+        plt.plot(
+            weekly_counts_smooth.index.to_timestamp(),
+            weekly_counts_smooth,
+            marker="o",
+            color="blue",
+            linewidth=2,
+            label=f"{window}-Week Moving Average"
+        )
+
+        plt.title(f"Weekly Time Series for {column}", fontsize=16, fontweight="bold")
+        plt.xlabel("Week", fontsize=12, labelpad=10)
+        plt.ylabel("Count", fontsize=12, labelpad=10)
+
+        # Add gridlines for readability
+        plt.grid(True, which="both", linestyle="--", linewidth=0.5, alpha=0.7)
+
+        # Add legend
+        plt.legend(fontsize=10)
+
+        # Rotate x-axis labels for better readability
+        plt.xticks(fontsize=10, rotation=45)
+        plt.yticks(fontsize=10)
+
+        # Add padding around the plot
+        plt.tight_layout()
+
+        # Save the plot
+        plt.savefig(f"{self.output_dir}/{column_name}_weekly_time_series.png", dpi=300)
+        plt.close()
+
+class StringProfiler:
+    def __init__(self, column_data):
+        """
+        Initialize the profiler for a specific string column.
+
+        Args:
+            column_data (pd.Series): The column to profile.
+        """
+        self.col_data = column_data
+
+    def profile(self):
+        """
+        Profiles the string column, including entropy, dominance, and special character analysis.
+
+        Returns:
+            dict: A dictionary containing the profiling results.
+        """
+        suspicious_patterns = [
+            r"Z{2,}",  # Two or more Z's in a row
+            r"9{2,}",  # Two or more 9's in a row
+            r"\d{6,}",  # Sequential numbers, 6 or more digits
+            r"(?i)test",  # Case-insensitive 'test'
+            r"(?i)none"  # Case-insensitive 'none'
+        ]
+        empty_patterns = ['None', 'nan', '']
+        suspicious_data = self._identify_invalid_patterns_regex(suspicious_patterns)
+        special_characters = self._count_special_characters()
+        entropy_value = entropy(self.col_data.value_counts(normalize=True), base=2)
+        top_dominance = self.col_data.value_counts(normalize=True).head(1).values[0] * 100 if not self.col_data.empty else 0
+
+        return {
+            "distinct_values": self.col_data.nunique(),
+            "string_lengths": {
+                "min": self.col_data.str.len().min(),
+                "max": self.col_data.str.len().max(),
+                "mean": self.col_data.str.len().mean()
+            },
+            "most_common": self.col_data.value_counts().head(4).to_dict(),
+            "least_common": self.col_data.value_counts().tail(4).to_dict(),
+            "duplicates_count": self.col_data.duplicated().sum(),
+            "all_uppercase_count": self.col_data.str.isupper().sum(),
+            "all_lowercase_count": self.col_data.str.islower().sum(),
+            "empty_vals": self.col_data.isna().sum() + self.col_data.str.strip().isin(empty_patterns).sum(),
+            "entropy": entropy_value,
+            "dominance": top_dominance,
+            "special_character_count": special_characters,
+            "suspicious_data": suspicious_data
+        }
+
+    def _count_special_characters(self):
+        """
+        Count occurrences of special characters like hashtags and mentions.
+
+        Returns:
+            dict: A dictionary containing counts of special characters.
+        """
+        special_chars = {
+            "hashtags": self.col_data.str.count(r"#").sum(),
+            "mentions": self.col_data.str.count(r"@").sum()
+        }
+        return special_chars
+
+    def profile_phone_numbers(self):
+        """
+        Placeholder for profiling phone numbers (requires phonenumbers library).
+
+        Returns:
+            dict: A dictionary containing counts of valid and invalid phone numbers.
+        """
+        valid_count = 0
+        invalid_count = 0
+        try:
+            import phonenumbers
+            for number in self.col_data:
+                try:
+                    parsed = phonenumbers.parse(number, "US")
+                    if phonenumbers.is_valid_number(parsed):
+                        valid_count += 1
+                except:
+                    invalid_count += 1
+        except ImportError:
+            print("phonenumbers library not installed.")
+            return {"valid_phone_numbers": "N/A", "invalid_phone_numbers": "N/A"}
+
+        return {"valid_phone_numbers": valid_count, "invalid_phone_numbers": invalid_count}
+
+    def _identify_invalid_patterns_regex(self, patterns):
+        """
+        Identify suspicious patterns in a column using regex.
+
+        Args:
+            patterns (list): A list of regex patterns to check for.
+
+        Returns:
+            dict: A dictionary containing counts of suspicious patterns.
+        """
+        suspicious_counts = {}
+        for pattern in patterns:
+            matches = self.col_data.str.contains(pattern, na=False, regex=True)
+            suspicious_counts[pattern] = int(matches.sum())
+        return suspicious_counts
+
+class NumericProfiler:
+    def __init__(self, column_data):
+        """
+        Initialize the profiler for a specific numeric column.
+
+        Args:
+            column_data (pd.Series): The numeric column to profile.
+        """
+        self.col_data = column_data
+
+    def profile(self):
+        """
+        Profiles the numeric column, including additional percentiles and outlier detection.
+
+        Returns:
+            dict: A dictionary containing the profiling results.
+        """
+        stats = self.col_data.describe(percentiles=[0.01, 0.05, 0.33, 0.5, 0.66, 0.95, 0.99]).to_dict()
+        outliers = self.detect_outliers()
+        return {
+            "statistics": {k: round(v, 2) for k, v in stats.items()},
+            "skewness": round(self.col_data.skew(), 2),
+            "kurtosis": round(self.col_data.kurt(), 2),
+            "most_common": self.col_data.value_counts().head(4).round(2).to_dict(),
+            "least_common": self.col_data.value_counts().tail(4).round(2).to_dict(),
+            "outliers": outliers.tolist()
+        }
+
+    def detect_outliers(self, method='iqr'):
+        """
+        Detect outliers using IQR or Z-score.
+
+        Args:
+            method (str): The method to use for detecting outliers ('iqr' or 'zscore').
+
+        Returns:
+            pd.Series: A Series containing the outlier values.
+        """
+        if method == 'iqr':
+            q1 = self.col_data.quantile(0.25)
+            q3 = self.col_data.quantile(0.75)
+            iqr = q3 - q1
+            return self.col_data[(self.col_data < (q1 - 1.5 * iqr)) | (self.col_data > (q3 + 1.5 * iqr))]
+        elif method == 'zscore':
+            z_scores = (self.col_data - self.col_data.mean()) / self.col_data.std()
+            return self.col_data[(z_scores < -3) | (z_scores > 3)]
+        else:
+            raise ValueError("Invalid method. Use 'iqr' or 'zscore'.")
 class DataProfiler:
     def __init__(self, dataframe, custom_types=None, output_dir="."):
         self.df = dataframe
@@ -27,7 +390,6 @@ class DataProfiler:
             self.custom_types = {**default_types, **self.custom_types}
         else:
             self.custom_types = default_types
-
 
     def _preprocess_data(self):
         """
@@ -69,177 +431,7 @@ class DataProfiler:
         Placeholder for phone number parsing logic.
         """
         return value
-
-    def profile_column_as_string(self, column):
-        """
-        Profiles string columns, including entropy, dominance, and special character analysis.
-        """
-        col_data = self.df[column]
-        suspicious_patterns = [
-            r"Z{2,}",  # Two or more Z's in a row
-            r"9{2,}",  # Two or more 9's in a row
-            r"\d{6,}",  # Sequential numbers, 6 or more digits
-            r"(?i)test",  # Case-insensitive 'test'
-            r"(?i)none"  # Case-insensitive 'none'
-        ]
-        empty_patterns = ['None', 'nan', '']
-        suspicious_data = self._identify_invalid_patterns_regex(col_data, suspicious_patterns)
-        special_characters = self._count_special_characters(col_data)
-        entropy_value = entropy(col_data.value_counts(normalize=True), base=2)
-        top_dominance = col_data.value_counts(normalize=True).head(1).values[0] * 100 if not col_data.empty else 0
-
-        return {
-            "distinct_values": col_data.nunique(),
-            "string_lengths": {
-                "min": col_data.str.len().min(),
-                "max": col_data.str.len().max(),
-                "mean": col_data.str.len().mean()
-            },
-            "most_common": col_data.value_counts().head(4).to_dict(),
-            "least_common": col_data.value_counts().tail(4).to_dict(),
-            "duplicates_count": col_data.duplicated().sum(),
-            "all_uppercase_count": col_data.str.isupper().sum(),
-            "all_lowercase_count": col_data.str.islower().sum(),
-            "empty_vals" : col_data.isna().sum() + col_data.str.strip().isin(empty_patterns).sum(),
-            "entropy": entropy_value,
-            "dominance": top_dominance,
-            "special_character_count": special_characters,
-            "suspicious_data": suspicious_data
-        }
-
-    def _count_special_characters(self, col_data):
-        """
-        Count occurrences of special characters like hashtags and mentions.
-        """
-        special_chars = {
-            "hashtags": col_data.str.count(r"#").sum(),
-            "mentions": col_data.str.count(r"@").sum()
-        }
-        return special_chars
-
-    def profile_column_as_numeric(self, column):
-        """
-        Profiles numeric columns, including additional percentiles.
-        """
-        col_data = self.df[column]
-        stats = col_data.describe(percentiles=[0.01, 0.05, 0.33, 0.5, 0.66, 0.95, 0.99]).to_dict()
-        outliers = self.detect_outliers(col_data)
-        return {
-            "statistics": stats,
-            "skewness": col_data.skew(),
-            "kurtosis": col_data.kurt(),
-            "most_common": col_data.value_counts().head(4).round(2).to_dict(),
-            "least_common": col_data.value_counts().tail(4).round(2).to_dict(),
-            "outliers": outliers.tolist()
-        }
-      
-    def profile_phone_numbers(self, df, phone_column):
-        valid_count = 0
-        invalid_count = 0
-        for number in df[phone_column]:
-            try:
-                parsed = phonenumbers.parse(number, "US")
-                if phonenumbers.is_valid_number(parsed):
-                    valid_count += 1
-            except:
-                invalid_count += 1
-        return {"valid_phone_numbers": valid_count, "invalid_phone_numbers": invalid_count}
-
-    def profile_temporal_data(self):
-        """
-        Profiles temporal data, providing insights into time coverage, gaps, and trends.
-        
-        Args:
-            df (pd.DataFrame): The dataset to profile.
-        
-        Returns:
-            dict: A dictionary containing temporal analysis results.
-        """
-        temporal_columns = [col for col, dtype in self.custom_types.items() if dtype == 'date']
-        temporal_analysis = {}
-        for column in temporal_columns:
-            col_data = self.df[column]
-            temporal_analysis[column] = {
-                "earliest": col_data.min(),
-                "latest": col_data.max(),
-                "time_span": col_data.max() - col_data.min(),
-                "temporal_gaps": col_data.diff().describe().to_dict(),
-                "day_of_week_distribution": col_data.dt.dayofweek.value_counts().to_dict(),
-                "monthly_trends": col_data.dt.month.value_counts().sort_index().to_dict(),
-                "day_trends": col_data.value_counts().sort_index().to_dict()
-            }
-        return temporal_analysis
-
-    def detect_outliers(self, series, method='iqr'):
-        """
-        Detect outliers using IQR or Z-score.
-        """
-        if method == 'iqr':
-            q1 = series.quantile(0.25)
-            q3 = series.quantile(0.75)
-            iqr = q3 - q1
-            return series[(series < (q1 - 1.5 * iqr)) | (series > (q3 + 1.5 * iqr))]
-        elif method == 'zscore':
-            z_scores = (series - series.mean()) / series.std()
-            return series[(z_scores < -3) | (z_scores > 3)]
-
-    def _identify_invalid_patterns_regex(self, col_data, patterns):
-        """
-        Identify suspicious patterns in a column using regex.
-        """
-        suspicious_counts = {}
-        for pattern in patterns:
-            matches = col_data.str.contains(pattern, na=False, regex=True)
-            suspicious_counts[pattern] = matches.sum()
-        return suspicious_counts
-
-    # Bar Chart: Categorical Variable
-    def bar_chart(self, column, output_path, top_n=10):
-
-        value_counts = self.df[column].value_counts()
-        top_values = value_counts.head(top_n)
-        
-        if len(value_counts) > top_n:
-            other_count = value_counts.iloc[top_n:].sum()
-            top_values["Other"] = other_count
-            
-        top_values.plot(kind='bar', color='skyblue')
-        plt.title(f"Bar Chart for {column}")
-        plt.xlabel(column)
-        plt.savefig(output_path)
-        plt.close()
     
-    # Histogram: Numerical Variable
-    def histogram(self, column, output_path):
-        self.df[column].plot(kind="hist", bins=20, color="lightgreen", edgecolor="black")
-        plt.title(f"Histogram for {column}")
-        plt.xlabel(column)
-        plt.ylabel("Frequency")
-        plt.savefig(output_path)
-        plt.close()
-
-    def kde_plot(self, column, output_path):
-        sns.kdeplot(self.df[column], shade=True, color="blue")
-        plt.title(f"KDE Plot for {column}")
-        plt.xlabel(column)
-        plt.ylabel("Density")
-        plt.savefig(output_path)
-        plt.close()
-      
-    # Box Plot: Outliers and Spread
-    def box_plot(self, column, output_path):
-        sns.boxplot(y=self.df[column], color="coral")
-        plt.title(f"Box Plot for {column}")
-        plt.ylabel(column)
-        plt.savefig(output_path)
-        plt.close()
-    
-    # Missing Value Matrix
-    def missing_value_matrix(self, output_path):
-        msno.matrix(self.df)
-        plt.title("Missing Value Matrix")
-        plt.savefig(output_path)
-        plt.close()		
 
     def profile_dataset(self):
         """
@@ -254,23 +446,6 @@ class DataProfiler:
             "duplicates": self.df.duplicated().sum()
         }
         
-        temporal_analyses = self.profile_temporal_data()
-
-        phone_profiles = {
-            col: self.profile_phone_numbers(self.df, col)
-            for col, dtype in self.custom_types.items() if dtype == 'phone_number'
-        }
-
-        string_profiles = {
-            col: self.profile_column_as_string(col)
-            for col, dtype in self.custom_types.items() if dtype in ['object', 'category', 'str']
-        }
-
-        numeric_profiles = {
-            col: self.profile_column_as_numeric(col)
-            for col, dtype in self.custom_types.items() if dtype in ['int64', 'float64', 'numeric']
-        }
-
         # Ensure the output directory exists
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
@@ -279,23 +454,52 @@ class DataProfiler:
         if not os.path.exists(plots_dir):
             os.makedirs(plots_dir)
 
+        temporal_analyzer = TemporalAnalyzer(self.df, plots_dir)
+
+        # Perform analysis
+
+        temporal_analyses = {}
+        string_profiles = {}
+        numeric_profiles = {}
+        phone_profiles = {}
+        for col, dtype in self.custom_types.items():
+            if dtype in ['date', 'datetime64[ns]', 'timestamp', 'datetime', 'unix_timestamp']:
+                temporal_analyses[col] = temporal_analyzer.analyze_temporal_column(col)     
+            elif dtype in ['object', 'category', 'str']:
+                string_profiler = StringProfiler(self.df[col])
+                string_profiles[col] = string_profiler.profile()    
+            elif dtype == 'phone_number':
+                string_profiler = StringProfiler(self.df[col])
+                phone_profiles[col] = string_profiler.profile_phone_numbers() 
+            elif dtype in ['int64', 'float64', 'numeric']:
+                numeric_profiler = NumericProfiler(self.df[col])
+                numeric_profiles[col] = numeric_profiler.profile()
+            else:
+                print(f"Skipping column {col} with unsupported type {dtype}")
+
+        
+        profiler_plotter = DataProfilerPlots(self.df)
+
         # Generate missing value matrix
-        self.missing_value_matrix(f"{self.output_dir}/plots/missing_value_matrix.png")
+        profiler_plotter.missing_value_matrix(f"{plots_dir}/missing_value_matrix.png")
 
         # Generate column visuals
         for column in string_profiles.keys():
-            self.bar_chart(self.df, column, f"Bar Chart for {column}")
-            plt.savefig(f"{self.output_dir}/plots/{column}_barchart.png")
-            plt.close()
+            column_name = re.sub(r'[^\w\-_]', '_', column)
+            column_name = re.sub(r'__+', '_', column_name)
+            profiler_plotter.bar_chart(column, f"{plots_dir}/{column_name}_barchart.png")
 
         for column in numeric_profiles.keys():
-            self.histogram(column, f"{self.output_dir}/plots/{column}_histogram.png")
-            self.kde_plot(column, f"{self.output_dir}/plots/{column}_kde_plot.png")
-            self.box_plot(column, f"{self.output_dir}/plots/{column}_boxplot.png")
+            column_name = re.sub(r'[^\w\-_]', '_', column)
+            column_name = re.sub(r'__+', '_', column_name)
+            profiler_plotter.histogram(column, f"{plots_dir}/{column_name}_histogram.png")
+            profiler_plotter.kde_plot(column, f"{plots_dir}/{column_name}_kde_plot.png")
+            profiler_plotter.box_plot(column, f"{plots_dir}/{column_name}_boxplot.png")
 
         self.results['temporal_analyses'] = temporal_analyses
         self.results['metadata'] = metadata
         self.results['string_profiles'] = string_profiles
+        self.results['phone_profiles'] = phone_profiles
         self.results['numeric_profiles'] = numeric_profiles
 
     def generate_report(self, format='markdown', output_filename="data_profile.md"):
@@ -312,7 +516,9 @@ class DataProfiler:
         """
         Generate a Markdown report with a section per column.
         """
-        report = "# Data Profile Report\n\n"
+        plots_dir = "plots"
+
+        report = f"# Data Profile Report\n\n"
         metadata = self.results.get("metadata", {})
         report += "## Metadata\n"
         for key, value in metadata.items():
@@ -320,17 +526,25 @@ class DataProfiler:
 
         # Missing value matrix
         report += "\n## Missing Value Matrix\n"
-        report += f"![Missing Value Matrix]({self.output_dir}/plots/missing_value_matrix.png)\n"
+        report += f"![Missing Value Matrix](./{plots_dir}/missing_value_matrix.png)\n"
 
-        report += "\n## Temporal Analysis\n"
-        for column, analysis in self.results["temporal_analyses"].items():
-            report += f"### {column}\n"
+        report += "\n## Temporal Analyses\n"
+        
+        temporal_analyses = self.results.get("temporal_analyses", {})
+        for column, analysis in temporal_analyses.items():
+            column_name = re.sub(r'[^\w\-_]', '_', column)
+            column_name = re.sub(r'__+', '_', column_name)
+            report += f"## Temporal Analysis for {column}\n\n"
             for key, value in analysis.items():
                 report += f"- **{key}**: {value}\n"
+            report += f"![Temporal Gaps Distribution](./{plots_dir}/{column_name}_temporal_gaps_distribution.png)\n"
+            report += f"![Weekly Time Series](./{plots_dir}/{column_name}_weekly_time_series.png)\n\n"
 
         report += "\n## Numeric Columns\n"
         numeric_profiles = self.results.get("numeric_profiles", {})
         for column, profile in numeric_profiles.items():
+            column_name = re.sub(r'[^\w\-_]', '_', column)
+            column_name = re.sub(r'__+', '_', column_name)
             report += f"### {column}\n"
             stats = profile.get("statistics", {})
             for stat, value in stats.items():
@@ -338,15 +552,19 @@ class DataProfiler:
             report += f"- **Skewness**: {profile.get('skewness')}\n"
             report += f"- **Kurtosis**: {profile.get('kurtosis')}\n"
             report += f"- **Outliers**: {len(profile.get('outliers', []))} detected\n"
-            report += f"![Histogram for {column}]({self.output_dir}/plots/{column}_histogram.png)\n"
-            report += f"![KDE Plot for {column}]({self.output_dir}/plots/{column}_kde_plot.png)\n"
-            report += f"![Box Plot for {column}]({self.output_dir}/plots/{column}_boxplot.png)\n"
+            report += f"![Histogram for {column}](./{plots_dir}/{column_name}_histogram.png)\n"
+            report += f"![KDE Plot for {column}](./{plots_dir}/{column_name}_kde_plot.png)\n"
+            report += f"![Box Plot for {column}](./{plots_dir}/{column_name}_boxplot.png)\n"
 
         report += "\n## String Columns\n"
         string_profiles = self.results.get("string_profiles", {})
         for column, profile in string_profiles.items():
+            column_name = re.sub(r'[^\w\-_]', '_', column)
+            column_name = re.sub(r'__+', '_', column_name)
             report += f"### {column}\n"
             report += f"- **Distinct Values**: {profile.get('distinct_values')}\n"
+            report += f"- **Most Common**: {profile.get('most_common')}\n"
+            report += f"- **Least Common**: {profile.get('least_common')}\n"
             lengths = profile.get("string_lengths", {})
             report += f"- **String Lengths**: min: {lengths.get('min')}, max: {lengths.get('max')}, mean: {lengths.get('mean'):.2f}\n"
             report += f"- **Duplicates Count**: {profile.get('duplicates_count')}\n"
@@ -358,8 +576,10 @@ class DataProfiler:
             suspicious = profile.get("suspicious_data", {})
             if suspicious:
                 report += f"- **Suspicious Data**: {suspicious}\n"
-            report += f"- **Distinct Values**: {profile.get('distinct_values')}\n"
-            report += f"![Bar Chart for {column}]({self.output_dir}/plots/{column}_barchart.png)\n"
+            report += f"- **All Uppercase**: {profile.get('all_uppercase_count')}\n"
+            report += f"- **All Lowercase**: {profile.get('all_lowercase_count')}\n"
+            report += f"- **Empty Values**: {profile.get('empty_vals')}\n"
+            report += f"![Bar Chart for {column}](./{plots_dir}/{column_name}_barchart.png)\n"
 
         output_file = os.path.join(self.output_dir, output_filename)
 

@@ -8,6 +8,10 @@ data_pipeline/session_cookies.pkl
 # Optional: Ignore all .csv files
 *.csv
 *.pyc
+*.png
 data_pipeline/pull_dec_29/profiling_output/aged_ar_report.csv_profiling.md
 data_pipeline/pull_dec_29/profiling_output/integrated_payments_report.csv_profiling.md
 data_pipeline/pull_dec_29/profiling_output/statement_submission_report.csv_profiling.md
+Bar Chart for generatedFrom.png
+Bar Chart for Chart Number.png
+Bar Chart for First Visit.png
