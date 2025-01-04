@@ -16,9 +16,25 @@ class DataProfilerPlots:
         """
         Helper function to wrap text for axis labels and titles.
         """
-        return "\n".join(textwrap.wrap(text, width))
+        wrapped_lines = textwrap.wrap(text, width)
+        return "\n".join(wrapped_lines)
+    
+    def wrap_xtick_labels(ax, wrap_width=20):
+        """
+        Wrap the x-axis tick labels on a Matplotlib Axes object.
 
-    def bar_chart(self, column, output_path, wrap_width=20, top_n=10):
+        Args:
+            ax (matplotlib.axes.Axes): The Axes object containing the plot.
+            wrap_width (int): The width at which to wrap the labels.
+        """
+        labels = [label.get_text() for label in ax.get_xticklabels()]
+        wrapped_labels = [_wrap_text(label, wrap_width) for label in labels]
+
+        # Set the ticks explicitly
+        ax.set_xticks(range(len(labels)))
+        ax.set_xticklabels(wrapped_labels, rotation=60, ha="center")
+
+    def bar_chart(self, column, output_path, wrap_width=20, top_n=12):
         #print("DEBUG: Column being plotted -", column)
         
         # Compute value counts
@@ -36,11 +52,15 @@ class DataProfilerPlots:
         
         # Plot bar chart
         ax = top_values_series.plot(kind='bar', color='skyblue')
-        ax.set_title(self._wrap_text(f"Bar Chart for {column}", wrap_width))
+        ax.set_title(f"Bar Chart for {column}")
         ax.set_xlabel(self._wrap_text(column, wrap_width))
+        labels = [label.get_text() for label in ax.get_xticklabels()]
+        wrapped_labels = [self._wrap_text(label, wrap_width) for label in labels]
+        ax.set_xticks(range(len(labels)))
+        ax.set_xticklabels(wrapped_labels, rotation=90, ha="center")  # Adjust rotation and alignment if needed
         ax.set_ylabel("Count")
         # Increase bottom margin
-        #plt.subplots_adjust(bottom=0.1)  # Adjust the bottom margin
+        plt.subplots_adjust(bottom=0.40, top = 0.90)  # Adjust the bottom margin
         # Save the plot
         plt.savefig(output_path)
         plt.close()
@@ -49,38 +69,53 @@ class DataProfilerPlots:
     # Histogram: Numerical Variable
     def histogram(self, column, output_path, wrap_width=20):
         ax = self.df[column].plot(kind="hist", bins=20, color="lightgreen", edgecolor="black")
-        ax.set_title(self._wrap_text(f"Histogram for {column}", wrap_width))
+        ax.set_title(f"Histogram for {column}")
         ax.set_xlabel(self._wrap_text(column, wrap_width))
         ax.set_ylabel("Frequency")
-        #plt.subplots_adjust(bottom=0.1)  # Increase bottom margin
+        # labels = [label.get_text() for label in ax.get_xticklabels()]
+        # wrapped_labels = [self._wrap_text(label, wrap_width) for label in labels]
+        # ax.set_xticks(range(len(labels)))
+        # ax.set_xticklabels(wrapped_labels, rotation=60, ha="center")  # Adjust rotation and alignment if needed
+        plt.subplots_adjust(bottom=0.2, top = 0.85)  # Increase bottom margin
         plt.savefig(output_path)
         plt.close()
 
     # KDE Plot
     def kde_plot(self, column, output_path, wrap_width=20):
         ax = sns.kdeplot(self.df[column], fill=True, color="blue")
-        ax.set_title(self._wrap_text(f"KDE Plot for {column}", wrap_width))
+        ax.set_title(f"KDE Plot for {column}")
         ax.set_xlabel(self._wrap_text(column, wrap_width))
         ax.set_ylabel("Density")
-        #plt.subplots_adjust(bottom=0.1)  # Increase bottom margin
+        # labels = [label.get_text() for label in ax.get_xticklabels()]
+        # wrapped_labels = [self._wrap_text(label, wrap_width) for label in labels]
+        # ax.set_xticks(range(len(labels)))
+        # ax.set_xticklabels(wrapped_labels, rotation=60, ha="center")  # Adjust rotation and alignment if needed
+        plt.subplots_adjust(bottom=0.2, top = 0.85)  # Increase bottom margin
         plt.savefig(output_path)
         plt.close()
 
     # Box Plot: Outliers and Spread
     def box_plot(self, column, output_path, wrap_width=20):
         ax = sns.boxplot(y=self.df[column], color="coral")
-        ax.set_title(self._wrap_text(f"Box Plot for {column}", wrap_width))
+        ax.set_title(f"Box Plot for {column}")
         ax.set_ylabel(self._wrap_text(column, wrap_width))
-        #plt.subplots_adjust(bottom=0.1)  # Increase bottom margin
+        # labels = [label.get_text() for label in ax.get_xticklabels()]
+        # wrapped_labels = [self._wrap_text(label, wrap_width) for label in labels]
+        # ax.set_xticks(range(len(labels)))
+        # ax.set_xticklabels(wrapped_labels, rotation=60, ha="center")  # Adjust rotation and alignment if needed
+        plt.subplots_adjust(bottom=0.2, top = 0.85)  # Increase bottom margin
         plt.savefig(output_path)
         plt.close()
 
     # Missing Value Matrix
-    def missing_value_matrix(self, output_path):
+    def missing_value_matrix(self, output_path, wrap_width=20):
         fig, ax = plt.subplots(figsize=(15, 10))  # Set larger dimensions for clarity
         msno.matrix(self.df, ax=ax)
         ax.set_title("Missing Value Matrix")
-        #plt.subplots_adjust(top=0.2, right=0.2)  # Adjust margins
+        # labels = [label.get_text() for label in ax.get_xticklabels()]
+        # wrapped_labels = [self._wrap_text(label, wrap_width) for label in labels]
+        # ax.set_xticklabels(wrapped_labels, rotation=0, ha="center")  # Adjust rotation and alignment if needed
+        plt.subplots_adjust(top=0.80, right=0.9)  # Slightly adjust top and right margins
         plt.savefig(output_path)
         plt.close()
 
@@ -94,11 +129,13 @@ class TemporalAnalyzer:
         """
         Perform temporal analysis for a single column.
         """
-        col_data = self.df[column]
+        col_data = self.df[column].dropna()
+        earliest = col_data.min()
+        latest = col_data.max()
         analysis = {
-            "earliest": col_data.min().strftime("%Y-%m-%d"),
-            "latest": col_data.max().strftime("%Y-%m-%d"),
-            "time_span": f"{(col_data.max() - col_data.min()).days} days",
+            "earliest": earliest.strftime("%Y-%m-%d") if pd.notna(earliest) else "N/A",
+            "latest": latest.strftime("%Y-%m-%d") if pd.notna(latest) else "N/A",
+            "time_span": f"{(latest - earliest).days} days" if pd.notna(earliest) and pd.notna(latest) else "N/A",
             "temporal_gaps": self._summarize_temporal_gaps(col_data),
             "day_of_week_distribution": self._format_day_of_week_distribution(col_data.dt.dayofweek.value_counts().to_dict()),
             "monthly_trends": self._format_monthly_trends(col_data.dt.month.value_counts().sort_index().to_dict())
@@ -346,7 +383,8 @@ class NumericProfiler:
             "kurtosis": round(self.col_data.kurt(), 2),
             "most_common": self.col_data.value_counts().head(4).round(2).to_dict(),
             "least_common": self.col_data.value_counts().tail(4).round(2).to_dict(),
-            "outliers": outliers.tolist()
+            "outliers": outliers.tolist(),
+            "avg_nonzero": self.col_data[self.col_data != 0].mean(),
         }
 
     def detect_outliers(self, method='iqr'):
@@ -402,10 +440,22 @@ class DataProfiler:
             elif dtype == 'id':
                 self.df[column] = self.df[column].astype(str)
             elif dtype == 'unix_timestamp':
-                self.df = self.convert_unix_timestamps(self.df, column, in_milliseconds=True)
+                self.df[column] = self.convert_unix_timestamps(self.df, column, in_milliseconds=True)
+            elif dtype == 'currency':
+                self.df[column] = self._treat_currency(self.df, column)
             elif dtype == 'date':
-                self.df[column] = pd.to_datetime(self.df[column], errors='coerce')
+                col = self.df[column].replace("Not Available", pd.NaT)
+                col = pd.to_datetime(col, errors='coerce', infer_datetime_format=True)
+                self.df[column] = col
 
+    def _treat_currency(self, df, column):
+        """
+        Placeholder for currency treatment logic.
+        """
+        coll = pd.to_numeric(df[column].replace('[\$,]', '', regex=True).replace('-', np.nan), errors='coerce').astype(float)
+        coll = coll.fillna(0)
+        return coll         
+    
     def convert_unix_timestamps(self, df, column, in_milliseconds=True):
         """
         Convert Unix timestamps in a specified column to datetime.
@@ -420,11 +470,11 @@ class DataProfiler:
         """
         try:
             factor = 1000 if in_milliseconds else 1
-            df[column] = pd.to_datetime(df[column] / factor, unit='s', errors='coerce')
+            coll = pd.to_datetime(df[column] / factor, unit='s', errors='coerce')
             print(f"Successfully converted {column} to datetime.")
         except Exception as e:
             print(f"Error converting column {column}: {e}")
-        return df
+        return coll
 
     def _parse_phone_number(self, value):
         """
@@ -463,6 +513,7 @@ class DataProfiler:
         numeric_profiles = {}
         phone_profiles = {}
         for col, dtype in self.custom_types.items():
+            print(f"Profiling column {col} with type {dtype}")
             if dtype in ['date', 'datetime64[ns]', 'timestamp', 'datetime', 'unix_timestamp']:
                 temporal_analyses[col] = temporal_analyzer.analyze_temporal_column(col)     
             elif dtype in ['object', 'category', 'str']:
@@ -471,7 +522,7 @@ class DataProfiler:
             elif dtype == 'phone_number':
                 string_profiler = StringProfiler(self.df[col])
                 phone_profiles[col] = string_profiler.profile_phone_numbers() 
-            elif dtype in ['int64', 'float64', 'numeric']:
+            elif dtype in ['int64', 'float64', 'numeric', 'currency']:
                 numeric_profiler = NumericProfiler(self.df[col])
                 numeric_profiles[col] = numeric_profiler.profile()
             else:
@@ -552,6 +603,7 @@ class DataProfiler:
             report += f"- **Skewness**: {profile.get('skewness')}\n"
             report += f"- **Kurtosis**: {profile.get('kurtosis')}\n"
             report += f"- **Outliers**: {len(profile.get('outliers', []))} detected\n"
+            report += f"- **Average (Nonzero)**: {profile.get('avg_nonzero'):.2f}\n"
             report += f"![Histogram for {column}](./{plots_dir}/{column_name}_histogram.png)\n"
             report += f"![KDE Plot for {column}](./{plots_dir}/{column_name}_kde_plot.png)\n"
             report += f"![Box Plot for {column}](./{plots_dir}/{column_name}_boxplot.png)\n"

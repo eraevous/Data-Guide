@@ -42,11 +42,16 @@ if __name__ == "__main__":
     }
     custom_types = {
         "aged_AR": {"id": "id", "phoneNumber": "phone_number", "billingStatement": "id", 
-        "lastPayment.datedAs": "unix_timestamp"},
+            "lastPayment.datedAs": "unix_timestamp"},
         "statement_submission": {"id": "id", "dateTime": "unix_timestamp", "patient.id": "id"},
-        "patient_list": {"Ascend Patient ID": "id", "Phone": "phone_number", "Date Of Birth": "date", "Prim. Subscriber ID": "id",
-        "Address": "address", "Email": "email", "First Visit": "date", "Last Visit": "date", 
-        "Last Procedure Date": "date", "Next Appointment Date": "date"},
+        "patient_list": {"Ascend Patient ID": "id", "Phone": "phone_number", "Date Of Birth": "date", 
+            "Prim. Subscriber ID": "id", "Address": "address", "Email": "email", "First Visit": "date", 
+            "Last Visit": "date", 
+            "Last Procedure Date": "date", "Next Appointment Date": "date"},
+        "processed_payments" : {"Date (Modified)" : "date", "Amount" : "currency", "Ascend Patient ID" : 'id'},
+        "transaction_details" : {"Date" : "date", "Ascend Patient ID" : "id", "Charges" : "currency", 
+            "Credits" : "currency"},
+        "treatment_tracker" : {"Ascend Patient ID" : "id", "Date" : "date", "Amount Presented" : "currency"}
     }
 
     # Ensure the output directory exists
