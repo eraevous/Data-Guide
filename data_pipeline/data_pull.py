@@ -77,10 +77,6 @@ def fetch_statement_submission_report(client, output_dir):
     df.to_csv(output_path, index=False)
     print(f"Statement Submission Report saved to {output_path}")
 
-def fetch_billing_statement_report(client, output_dir):
-    url = "https://live6.dentrixascend.com/billingStatements"
-    pass
-
 def fetch_integrated_payments_report(client, output_dir):
     url = "https://live6.dentrixascend.com/integratedPaymentReport"
     params = {
@@ -107,9 +103,55 @@ def fetch_integrated_payments_report(client, output_dir):
     
 
 def fetch_outstanding_claims_report(client, output_dir):
-    url = "https://live6.dentrixascend.com/statementSubmissionReport"
-    pass
+    url = "https://live6.dentrixascend.com/outstandingClaims"
+    params = {
+        "asOfDate": str(int(pd.Timestamp.now().timestamp() * 1000)),
+        #"asOfDate": 1735241026000,
+        "period": "ALL",
+        "asOfDateString": pd.Timestamp.now().strftime("%m/%d/%Y"),
+        #"asOfDateString": "12/26/2024",
+        "periodName": "All",
+        #"carrierId": "",
+        #"carrierPlanId": "",
+        "carrierName": "All",
+        "carrierPlanName": "All"
+    }
+    
+    data = client.make_request(url, method="GET", params=params)["data"]
+    df = pd.json_normalize(data)
+    
+    print(df.head())
+
+    # Save to CSV
+    output_path = os.path.join(output_dir, "outstanding_claims_report.csv")
+    df.to_csv(output_path, index=False)
+        
+    print(f"Outstanding Claims Report saved to {output_path}")
 
 def fetch_unresolved_claims_report(client, output_dir):
-    url = "https://live6.dentrixascend.com/statementSubmissionReport"
+    url = "https://live6.dentrixascend.com/kpi/OVERDUE_CLAIMS"
+    params = {
+        "carrierID" : ""
+    }
+
+    data = client.make_request(url, method="GET", params=params)["data"]["claims"]
+    df = pd.json_normalize(data)
+    
+    print(df.head())
+
+    # Save to CSV
+    output_path = os.path.join(output_dir, "unresolved_claims_report.csv")
+    df.to_csv(output_path, index=False)
+        
+    print(f"Unresolved Claims Report saved to {output_path}")
+
+def fetch_billing_statement_report(client, output_dir):
+    url = "https://live6.dentrixascend.com/billingStatements"
+   params =  {
+            "id": "",
+            "name": ", ",
+            "balance": 00.00,
+            "shouldPrint": false,
+            "corrupted": false
+        },
     pass

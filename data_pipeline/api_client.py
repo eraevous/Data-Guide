@@ -59,6 +59,8 @@ class APIClient:
             else:
                 raise ValueError("Unsupported HTTP method.")
 
+            print(response.url)
+
             print(f"{method} {url} - Status Code: {response.status_code}")
 
             # Debugging: Print response headers and content

@@ -28,10 +28,10 @@ if __name__ == "__main__":
     csv_files = {
         "aged_AR" : os.path.join(input_dir, "aged_ar_report.csv"),
         "statement_submission" : os.path.join(input_dir, "statement_submission_report.csv"),
-        #"integrated_payments" : os.path.join(input_dir, "integrated_payments_report.csv"),
+        "integrated_payments" : os.path.join(input_dir, "integrated_payments_report.csv"),
         #"billing_statement" : os.path.join(input_dir, "billing_statement_report.csv"),
-        #"outstanding_claims" : os.path.join(input_dir, "outstanding_claims_report.csv"),
-        #"unresolved_claims" : os.path.join(input_dir, "unresolved_claims_report.csv"),
+        "outstanding_claims" : os.path.join(input_dir, "outstanding_claims_report.csv"),
+        "unresolved_claims" : os.path.join(input_dir, "unresolved_claims_report.csv"),
         #"fee_schedule" : os.path.join(input_dir, "fee_schedule.csv"),
         #"openings" : os.path.join(input_dir,"openings.csv"),
         #"schedule" : os.path.join(input_dir,"schedule.csv"),
@@ -51,7 +51,13 @@ if __name__ == "__main__":
         "processed_payments" : {"Date (Modified)" : "date", "Amount" : "currency", "Ascend Patient ID" : 'id'},
         "transaction_details" : {"Date" : "date", "Ascend Patient ID" : "id", "Charges" : "currency", 
             "Credits" : "currency"},
-        "treatment_tracker" : {"Ascend Patient ID" : "id", "Date" : "date", "Amount Presented" : "currency"}
+        "treatment_tracker" : {"Ascend Patient ID" : "id", "Date" : "date", "Amount Presented" : "currency"},
+        "outstanding_claims" :{'id':'id', "createdDate" : "unix_timestamp", 'subscriberNumber' : 'id', "serviceDate" : "unix_timestamp",
+            'insuranceCarrier.phoneNumber' : 'phone_number', 'insuranceCarrier.phoneExtension' : 'skip', "insuranceCarrier.website" : "url",
+            'subscriber.id':'id', 'patient.id':'id', 'groupPlan.phoneNumber':'phone_number', 'groupPlan.phoneExtension':'skip', 
+            'subscriber.dateOfBirth' : 'unix_timestamp', 'patient.dateOfBirth' : 'unix_timestamp',},
+        "unresolved_claims" :{'claimId': 'id', 'carrierId': 'id', 'patientId': 'id'},
+        "integrated_payments" :{'id': 'id', 'transactionDateTime': 'unix_timestamp','transactionId': 'id'},
     }
 
     # Ensure the output directory exists

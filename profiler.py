@@ -96,7 +96,11 @@ class DataProfilerPlots:
 
     # Box Plot: Outliers and Spread
     def box_plot(self, column, output_path, wrap_width=20):
-        ax = sns.boxplot(y=self.df[column], color="coral")
+        col_data = self.df[column].dropna()
+        if col_data.empty:
+            print(f"No data available for box plot of {column}")
+            return
+        ax = sns.boxplot(y=col_data, color="coral")
         ax.set_title(f"Box Plot for {column}")
         ax.set_ylabel(self._wrap_text(column, wrap_width))
         # labels = [label.get_text() for label in ax.get_xticklabels()]
@@ -473,6 +477,7 @@ class DataProfiler:
             coll = pd.to_datetime(df[column] / factor, unit='s', errors='coerce')
             print(f"Successfully converted {column} to datetime.")
         except Exception as e:
+            coll = df[column]
             print(f"Error converting column {column}: {e}")
         return coll
 

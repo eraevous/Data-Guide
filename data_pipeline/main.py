@@ -31,9 +31,9 @@ def main():
     fetch_statement_submission_report(client, output_dir)
     fetch_aged_ar_report(client, output_dir)
     fetch_integrated_payments_report(client, output_dir)
-    #fetch_billing_statement_report(client, output_dir)
-    #fetch_outstanding_claims_report(client, output_dir)
-    #fetch_unresolved_claims_report(client, output_dir)
+    # fetch_billing_statement_report(client, output_dir)
+    fetch_outstanding_claims_report(client, output_dir)
+    fetch_unresolved_claims_report(client, output_dir)
 
 if __name__ == "__main__":
     main()
