@@ -145,13 +145,13 @@ def fetch_unresolved_claims_report(client, output_dir):
         
     print(f"Unresolved Claims Report saved to {output_path}")
 
-def fetch_billing_statement_report(client, output_dir):
-    url = "https://live6.dentrixascend.com/billingStatements"
-   params =  {
-            "id": "",
-            "name": ", ",
-            "balance": 00.00,
-            "shouldPrint": false,
-            "corrupted": false
-        },
-    pass
+# def fetch_billing_statement_report(client, output_dir):
+#     url = "https://live6.dentrixascend.com/billingStatements"
+#     params =  {
+#             "id": "",
+#             "name": ", ",
+#             "balance": 00.00,
+#             "shouldPrint": false,
+#             "corrupted": false
+#         },
+#     pass
