@@ -487,6 +487,8 @@ class DataProfiler:
                 self.df[column] = self.df[column].apply(self._parse_phone_number)
             elif dtype == 'id':
                 self.df[column] = self.df[column].astype(str)
+            elif dtype == 'bool':
+                self.df[column] = self.df[column].astype(str)
             elif dtype == 'category':
                 self.df[column] = self.df[column].astype(str)
             elif dtype == 'unix_timestamp':
@@ -568,7 +570,7 @@ class DataProfiler:
             print(f"Profiling column {col} with type {dtype}")
             if dtype in ['date', 'datetime64[ns]', 'timestamp', 'datetime', 'unix_timestamp']:
                 temporal_analyses[col] = temporal_analyzer.analyze_temporal_column(col)     
-            elif dtype in ['object', 'category', 'str']:
+            elif dtype in ['object', 'category', 'str', 'bool']:
                 string_profiler = StringProfiler(self.df[col])
                 string_profiles[col] = string_profiler.profile()    
             elif dtype == 'phone_number':
