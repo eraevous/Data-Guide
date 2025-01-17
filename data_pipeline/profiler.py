@@ -34,7 +34,7 @@ class DataProfilerPlots:
         ax.set_xticks(range(len(labels)))
         ax.set_xticklabels(wrapped_labels, rotation=60, ha="center")
 
-    def column_chart(self, column, output_path, wrap_width=20, top_n=12, include_other=True):
+    def bar_or_column_chart(self, column, output_path, wrap_width=20, top_n=12, include_other=True, transpose=False):
         # Compute value counts
         value_counts = self.df[column].value_counts()
         other_count = value_counts.iloc[top_n:].sum() if len(value_counts) > top_n else 0
@@ -48,25 +48,60 @@ class DataProfilerPlots:
         top_values_series = pd.Series(top_values)
 
         # Plot column chart
-        ax = top_values_series.plot(kind='bar', color='skyblue')
-        ax.set_title(f"Column Chart for {column}")
-        ax.set_xlabel(self._wrap_text(column, wrap_width))
-        labels = [label.get_text() for label in ax.get_xticklabels()]
-        wrapped_labels = [self._wrap_text(label, wrap_width) for label in labels]
-        ax.set_xticks(range(len(labels)))
-        ax.set_xticklabels(wrapped_labels, rotation=90, ha="center")  # Adjust rotation and alignment if needed
-        ax.set_ylabel("Count")
+        if transpose:
+            ax = top_values_series.plot(kind='barh', color='skyblue')
+            ax.set_xlabel(self._wrap_text(column, wrap_width))
+            ax.set_ylabel("Count")
+            labels = [label.get_text() for label in ax.get_yticklabels()]
+            wrapped_labels = [self._wrap_text(label, wrap_width) for label in labels]
+            ax.set_yticks(range(len(labels)))
+            ax.set_yticklabels(wrapped_labels, ha="right")  # Adjust alignment if needed
+            ax.set_title(f"Column Chart for {column}")
+            ax.invert_yaxis()  # Reverse the Y-axis sort order
+
+        else:
+            ax = top_values_series.plot(kind='bar', color='skyblue')
+            ax.set_xlabel(self._wrap_text(column, wrap_width))
+            ax.set_ylabel("Count")
+            labels = [label.get_text() for label in ax.get_xticklabels()]
+            wrapped_labels = [self._wrap_text(label, wrap_width) for label in labels]
+            ax.set_xticks(range(len(labels)))
+            ax.set_xticklabels(wrapped_labels, rotation=90, ha="center")  # Adjust rotation and alignment if needed
+            ax.set_title(f"Bar Chart for {column}")
 
         # Add data labels for the % of the grand total
         total = value_counts.sum()
         for p in ax.patches:
-            percentage = f'{(p.get_height() / total) * 100:.1f}%'
-            ax.annotate(percentage, (p.get_x() + p.get_width() / 2., p.get_height()),
-                        ha='center', va='center', xytext=(0, 10), textcoords='offset points')
+            percentage = f'{(p.get_height() / total) * 100:.1f}%' if not transpose else f'{(p.get_width() / total) * 100:.1f}%'
+            ax.annotate(percentage, (p.get_x() + p.get_width() / 2. + 0.1, p.get_height()) if not transpose else (p.get_width() + 0.1, p.get_y() + p.get_height() / 2.),
+                        ha='center', va='center', xytext=(0, 10) if not transpose else (10, 0), textcoords='offset points')
 
         # Increase bottom margin
-        plt.subplots_adjust(bottom=0.40, top=0.90)  # Adjust the bottom margin
+        plt.subplots_adjust(bottom=0.40, top=0.90) if not transpose else plt.subplots_adjust(left=0.25, top=0.90)  # Adjust the margin
         # Save the plot
+        plt.savefig(output_path)
+        plt.close()
+
+    def donut_chart(self, column, output_path, top_n=6):
+        # Compute value counts
+        value_counts = self.df[column].value_counts()
+        top_values = value_counts.head(top_n)
+        other_values = value_counts.iloc[top_n:]
+
+        # Create labels for the top values and leave the rest unlabeled
+        labels = top_values.index.tolist() + [''] * len(other_values)
+        sizes = top_values.tolist() + other_values.tolist()
+
+        # Plot donut chart
+        plt.figure(figsize=(8, 8))
+        wedges, texts = plt.pie(sizes, labels=labels, startangle=90, wedgeprops=dict(width=0.3))
+
+        # Add a circle at the center to make it a donut chart
+        centre_circle = plt.Circle((0, 0), 0.70, fc='white')
+        fig = plt.gcf()
+        fig.gca().add_artist(centre_circle)
+
+        plt.title(f"Donut Chart for {column}")
         plt.savefig(output_path)
         plt.close()
 
@@ -284,11 +319,11 @@ class StringProfiler:
         suspicious_patterns = [
             r"Z{2,}",  # Two or more Z's in a row
             r"9{2,}",  # Two or more 9's in a row
-            r"\d{6,}",  # Sequential numbers, 6 or more digits
+            r"\d{4,}",  # Sequential numbers, 6 or more digits
             r"(?i)test",  # Case-insensitive 'test'
             r"(?i)none"  # Case-insensitive 'none'
         ]
-        empty_patterns = ['None', 'nan', '']
+        empty_patterns = ['(?i)None', '(?i)nan', '(?i)', '(?i)N/A', '(?i)Not Available', '(?i)Unknown', '(?i)blank', '(?i)missing', '(?i)null']
         suspicious_data = self._identify_invalid_patterns_regex(suspicious_patterns)
         special_characters = self._count_special_characters()
         entropy_value = entropy(self.col_data.value_counts(normalize=True), base=2)
@@ -394,7 +429,10 @@ class NumericProfiler:
             "most_common": self.col_data.value_counts().head(4).round(2).to_dict(),
             "least_common": self.col_data.value_counts().tail(4).round(2).to_dict(),
             "outliers": outliers.tolist(),
+            "count_negative": self.col_data[self.col_data < 0].count(),
+            "count_zero": (self.col_data == 0).sum(),
             "avg_nonzero": self.col_data[self.col_data != 0].mean(),
+            "count_blank" : self.col_data.isna().sum()
         }
 
     def detect_outliers(self, method='iqr'):
@@ -449,6 +487,8 @@ class DataProfiler:
                 self.df[column] = self.df[column].apply(self._parse_phone_number)
             elif dtype == 'id':
                 self.df[column] = self.df[column].astype(str)
+            elif dtype == 'category':
+                self.df[column] = self.df[column].astype(str)
             elif dtype == 'unix_timestamp':
                 self.df[column] = self.convert_unix_timestamps(self.df, column, in_milliseconds=True)
             elif dtype == 'currency':
@@ -462,7 +502,7 @@ class DataProfiler:
         """
         Placeholder for currency treatment logic.
         """
-        coll = pd.to_numeric(df[column].replace('[\$,]', '', regex=True).replace('-', np.nan), errors='coerce').astype(float)
+        coll = pd.to_numeric(df[column].replace(r'[\$,]', '', regex=True).replace('-', np.nan), errors='coerce').astype(float)
         coll = coll.fillna(0)
         return coll         
     
@@ -504,7 +544,8 @@ class DataProfiler:
             "row_count": len(self.df),
             "column_count": len(self.df.columns),
             "missing_values": self.df.isnull().sum().sum(),
-            "duplicates": self.df.duplicated().sum()
+            "duplicates": self.df.duplicated().sum(),
+            "columns": self.df.columns.tolist()
         }
         
         # Ensure the output directory exists
@@ -549,8 +590,9 @@ class DataProfiler:
         for column in string_profiles.keys():
             column_name = re.sub(r'[^\w\-_]', '_', column)
             column_name = re.sub(r'__+', '_', column_name)
-            profiler_plotter.column_chart(column, f"{plots_dir}/{column_name}_columnchart_all.png")
-            profiler_plotter.column_chart(column, f"{plots_dir}/{column_name}_columnchart_top.png", include_other=False)
+            profiler_plotter.bar_or_column_chart(column, f"{plots_dir}/{column_name}_columnchart_all.png", transpose=True)
+            profiler_plotter.bar_or_column_chart(column, f"{plots_dir}/{column_name}_columnchart_top.png", include_other=False, transpose=True)
+            profiler_plotter.donut_chart(column, f"{plots_dir}/{column_name}_donut.png")
 
         for column in numeric_profiles.keys():
             column_name = re.sub(r'[^\w\-_]', '_', column)
@@ -582,7 +624,7 @@ class DataProfiler:
         plots_dir = "plots"
 
         toc = []
-        toc.append("[Metadata](#metadata)")
+        toc.append("Metadata")
         
         report = f"# Data Profile Report\n\n"
         metadata = self.results.get("metadata", {})
@@ -590,14 +632,17 @@ class DataProfiler:
         for key, value in metadata.items():
             report += f"- **{key}**: {value}\n"
           
-        toc.append("[Missing Value Matrix](#missing-value-matrix)")
+        toc.append("Missing Value Matrix")
         # Missing value matrix
-        report += "\n## Missing Value Matrix\n"
+        report += "\n"
+        report += "## Missing Value Matrix"
+        report += "\n"
         report += f"![Missing Value Matrix](./{plots_dir}/missing_value_matrix.png)\n"
 
-        report += "\n## Temporal Analyses\n"
+        report += "\n"
+        report += "## Temporal Analyses\n"
         
-        toc.append("[Temporal Analysis](#temporal-analysis)")
+        toc.append("Temporal Analyses")
 
         temporal_analyses = self.results.get("temporal_analyses", {})
         for column, analysis in temporal_analyses.items():
@@ -609,12 +654,13 @@ class DataProfiler:
             report += f"![Temporal Gaps Distribution](./{plots_dir}/{column_name}_temporal_gaps_distribution.png)\n"
             report += f"![Weekly Time Series](./{plots_dir}/{column_name}_weekly_time_series.png)\n\n"
 
-        toc.append("[Numeric Columns](#numeric-columns)")
+        toc.append("Numeric Columns")
 
-        report += "\n## Numeric Columns\n"
+        report += "\n"
+        report += "## Numeric Columns\n"
         numeric_profiles = self.results.get("numeric_profiles", {})
         for column, profile in numeric_profiles.items():
-            toc.append(f"[{column} Profile](#{column})")
+            #toc.append(f"[{column} Profile](#{column})")
             column_name = re.sub(r'[^\w\-_]', '_', column)
             column_name = re.sub(r'__+', '_', column_name)
             report += f"### {column}\n"
@@ -626,16 +672,22 @@ class DataProfiler:
             report += f"- **Outliers**: {len(profile.get('outliers', []))} detected\n"
             report += f"- **Average (Nonzero)**: {profile.get('avg_nonzero'):.2f}\n"
             report += f"- **Number of Distinct Values**: {profile.get('distinct_values')}\n"
+            report += f"- **Most Common Values**: {profile.get('most_common')}\n"
+            report += f"- **Least Common Values**: {profile.get('least_common')}\n"
+            report += f"- **Negative Values**: {profile.get('count_negative')}\n"
+            report += f"- **Zero Values**: {profile.get('count_zero')}\n"
+            report += f"- **Blank Values**: {profile.get('count_blank')}\n"
             report += f"![Histogram for {column}](./{plots_dir}/{column_name}_histogram.png)\n"
             report += f"![KDE Plot for {column}](./{plots_dir}/{column_name}_kde_plot.png)\n"
             report += f"![Box Plot for {column}](./{plots_dir}/{column_name}_boxplot.png)\n"
 
-        toc.append("[String Columns](#string-columns)")
+        toc.append("String Columns")
 
-        report += "\n## String Columns\n"
+        report += "\n"
+        report += "## String Columns\n"
         string_profiles = self.results.get("string_profiles", {})
         for column, profile in string_profiles.items():
-            toc.append(f"[{column} Profile](#{column})")
+            #toc.append(f"[{column} Profile](#{column})")
             column_name = re.sub(r'[^\w\-_]', '_', column)
             column_name = re.sub(r'__+', '_', column_name)
             report += f"### {column}\n"
@@ -655,12 +707,15 @@ class DataProfiler:
                 report += f"- **Suspicious Data**: {suspicious}\n"
             report += f"- **All Uppercase**: {profile.get('all_uppercase_count')}\n"
             report += f"- **All Lowercase**: {profile.get('all_lowercase_count')}\n"
+            report += f"- **Special Characters**: {profile.get('special_character_count')}\n"
             report += f"- **Empty Values**: {profile.get('empty_vals')}\n"
-            report += f"![Bar Chart for {column} - Top Values](./{plots_dir}/{column_name}_columnchart_top.png)\n"
-            report += f"![Bar Chart for {column} - With Other](./{plots_dir}/{column_name}_columnchart_all.png)\n"
+            report += f"![Chart for {column} - Top Values](./{plots_dir}/{column_name}_columnchart_top.png)\n"
+            report += f"![Chart for {column} - With Other](./{plots_dir}/{column_name}_columnchart_all.png)\n"
+            report += f"![Donut Chart for {column} - With Other](./{plots_dir}/{column_name}_donut.png)\n"
 
-        toc.append("[Row Examples](#row-examples)")
-        report += "\n## Row Examples\n"
+        toc.append("Row Examples")
+        report += "\n"
+        report += "## Row Examples\n"
         report += "\n### First 10 Rows\n"
         report += self.df.head(10).to_markdown(index=False) + "\n"
 
@@ -670,7 +725,9 @@ class DataProfiler:
         report += "\n### Random 20 Rows\n"
         report += self.df.sample(n=20, random_state=42).to_markdown(index=False) + "\n"
 
-        toc_md = "\n".join([f"- [{item}](#{item.lower().replace(' ', '-')})" for item in toc])
+        toc_md = "\n".join([f"- [{item}](#{item.lower().replace(' ', '-').strip()})" 
+                            for item in toc])
+        
         report = f"# Table of Contents\n{toc_md}\n\n" + report
 
         output_file = os.path.join(self.output_dir, output_filename)

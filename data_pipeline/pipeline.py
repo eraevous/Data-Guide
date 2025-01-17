@@ -42,22 +42,39 @@ if __name__ == "__main__":
     }
     custom_types = {
         "aged_AR": {"id": "id", "phoneNumber": "phone_number", "billingStatement": "id", 
-            "lastPayment.datedAs": "unix_timestamp"},
-        "statement_submission": {"id": "id", "dateTime": "unix_timestamp", "patient.id": "id"},
+            "lastPayment.datedAs": "unix_timestamp", "guarantor" : "name", 'claimsPending': 'category',},
+
+        "statement_submission": {"id": "id", "dateTime": "unix_timestamp", "patient.id": "id",
+                                 'patient.firstName' : 'name', 'patient.lastName' : 'name'},
+
         "patient_list": {"Ascend Patient ID": "id", "Phone": "phone_number", "Date Of Birth": "date", 
             "Prim. Subscriber ID": "id", "Address": "address", "Email": "email", "First Visit": "date", 
-            "Last Visit": "date", 
+            "Last Visit": "date", 'Patient' : 'name', 'Primary Guarantor' : 'name', 'Primary Contact' : 'name',
+            'Last Name' : 'name', 'Chart Number' : 'id',
             "Last Procedure Date": "date", "Next Appointment Date": "date"},
-        "processed_payments" : {"Date (Modified)" : "date", "Amount" : "currency", "Ascend Patient ID" : 'id'},
+
+        "processed_payments" : {"Date (Modified)" : "date", "Amount" : "currency", "Ascend Patient ID" : 'id',
+                                'Patient' : 'name', 'Transaction ID' : 'id'},
+
         "transaction_details" : {"Date" : "date", "Ascend Patient ID" : "id", "Charges" : "currency", 
-            "Credits" : "currency"},
-        "treatment_tracker" : {"Ascend Patient ID" : "id", "Date" : "date", "Amount Presented" : "currency"},
+            "Credits" : "currency", 'Patient' : 'name', 'Chart Number' : 'id'},
+            
+        "treatment_tracker" : {"Ascend Patient ID" : "id", "Date" : "date", "Amount Presented" : "currency", 'Patient' : 'name',
+                               },
+
         "outstanding_claims" :{'id':'id', "createdDate" : "unix_timestamp", 'subscriberNumber' : 'id', "serviceDate" : "unix_timestamp",
             'insuranceCarrier.phoneNumber' : 'phone_number', 'insuranceCarrier.phoneExtension' : 'skip', "insuranceCarrier.website" : "url",
             'subscriber.id':'id', 'patient.id':'id', 'groupPlan.phoneNumber':'phone_number', 'groupPlan.phoneExtension':'skip', 
-            'subscriber.dateOfBirth' : 'unix_timestamp', 'patient.dateOfBirth' : 'unix_timestamp',},
-        "unresolved_claims" :{'claimId': 'id', 'carrierId': 'id', 'patientId': 'id'},
-        "integrated_payments" :{'id': 'id', 'transactionDateTime': 'unix_timestamp','transactionId': 'id'},
+            'subscriber.dateOfBirth' : 'unix_timestamp', 'patient.dateOfBirth' : 'unix_timestamp',
+            'subscriber.firstName' : 'name', 'subscriber.lastName' : 'name', 'patient.firstName' : 'name', 'patient.lastName' : 'name'},
+                            "unresolved_claims" :{'claimId': 'id', 'carrierId': 'id', 'patientId': 'id'},
+
+        "integrated_payments" :{'id': 'id', 'transactionDateTime': 'unix_timestamp','transactionId': 'id', 
+                                "transactionReferenceNumber" : 'id', 'transactionCardLogo' : 'category'},
+
+        "unresolved_claims" :{'claimStateId': 'category', 'carrierId': 'id', 'patientId': 'id', 'claimId': 'id',
+                              'carrierInsurancePlan.id': 'category', 'carrierInsurancePlan.insuranceCarrier.id': 'id',
+                              'patientName': 'name'},
     }
 
     # Ensure the output directory exists
