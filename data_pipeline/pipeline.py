@@ -40,6 +40,7 @@ if __name__ == "__main__":
         "transaction_details" : os.path.join(input_dir, "ZR - Transaction Detail.csv"),
         "treatment_tracker" : os.path.join(input_dir, "ZR - Treatment Tracker.csv"),
     }
+    
     custom_types = {
         "aged_AR": {"id": "id", "phoneNumber": "phone_number", "billingStatement": "id", 
             "lastPayment.datedAs": "unix_timestamp", "guarantor" : "name", 'claimsPending': 'category',},
