@@ -610,12 +610,12 @@ class DataProfiler:
         self.results['numeric_profiles'] = numeric_profiles
 
     def generate_report(self, format='markdown', output_filename="data_profile.md"):
-        if format == 'markdown':
+        if format == 'md':
             return self._generate_markdown_report(output_filename)
         elif format == 'html':
-            return self._generate_html_report()
+            return self._generate_html_report(output_filename)
         elif format == 'csv':
-            return self._generate_csv_report()
+            return self._generate_csv_report(output_filename)
         else:
             raise ValueError("Unsupported format: {}".format(format))
 
@@ -714,7 +714,7 @@ class DataProfiler:
             report += f"![Chart for {column} - Top Values](./{plots_dir}/{column_name}_columnchart_top.png)\n"
             report += f"![Chart for {column} - With Other](./{plots_dir}/{column_name}_columnchart_all.png)\n"
             report += f"![Donut Chart for {column} - With Other](./{plots_dir}/{column_name}_donut.png)\n"
-
+        """ 
         toc.append("Row Examples")
         report += "\n"
         report += "## Row Examples\n"
@@ -725,7 +725,8 @@ class DataProfiler:
         report += self.df.tail(10).to_markdown(index=False) + "\n"
 
         report += "\n### Random 20 Rows\n"
-        report += self.df.sample(n=20, random_state=42).to_markdown(index=False) + "\n"
+        report += self.df.sample(n=20, random_state=42).to_markdown(index=False) + "\n" 
+        """
 
         toc_md = "\n".join([f"- [{item}](#{item.lower().replace(' ', '-').strip()})" 
                             for item in toc])
@@ -754,11 +755,136 @@ class DataProfiler:
             file.write(content)
 
 
-    def _generate_html_report(self):
+    def _generate_html_report(self, output_filename):
         # Implement HTML report generation
-        pass
+        """
+        Generate an HTML report with a section per column.
+        """
+        plots_dir = "plots"
 
-    def _generate_csv_report(self):
+        # Start HTML report
+        report = """<!DOCTYPE html>
+        <html>
+        <head>
+            <title>Data Profile Report</title>
+            <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 0 20px; }
+                h1, h2, h3 { color: #333; }
+                table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #f4f4f4; }
+                img { max-width: 100%; height: auto; margin: 10px 0; }
+                ul { margin: 0; padding: 0; list-style-type: none; }
+                li { margin: 5px 0; }
+                a { text-decoration: none; color: #0066cc; }
+                a:hover { text-decoration: underline; }
+            </style>
+        </head>
+        <body>
+        <h1>Data Profile Report</h1>
+        """
+
+        # Metadata
+        report += "<h2>Metadata</h2><ul>"
+        metadata = self.results.get("metadata", {})
+        for key, value in metadata.items():
+            report += f"<li><strong>{key}:</strong> {value}</li>"
+        report += "</ul>"
+
+        # Missing Value Matrix
+        report += "<h2>Missing Value Matrix</h2>"
+        report += f"<img src='{plots_dir}/missing_value_matrix.png' alt='Missing Value Matrix'>"
+
+        # Temporal Analyses
+        report += "<h2>Temporal Analyses</h2>"
+        temporal_analyses = self.results.get("temporal_analyses", {})
+        for column, analysis in temporal_analyses.items():
+            column_name = re.sub(r'[^\w\-_]', '_', column)
+            column_name = re.sub(r'__+', '_', column_name)
+            report += f"<h3>Temporal Analysis for {column}</h3><ul>"
+            for key, value in analysis.items():
+                report += f"<li><strong>{key}:</strong> {value}</li>"
+            report += "</ul>"
+            report += f"<img src='{plots_dir}/{column_name}_temporal_gaps_distribution.png' alt='Temporal Gaps Distribution'>"
+            report += f"<img src='{plots_dir}/{column_name}_weekly_time_series.png' alt='Weekly Time Series'>"
+
+        # Numeric Columns
+        report += "<h2>Numeric Columns</h2>"
+        numeric_profiles = self.results.get("numeric_profiles", {})
+        for column, profile in numeric_profiles.items():
+            column_name = re.sub(r'[^\w\-_]', '_', column)
+            column_name = re.sub(r'__+', '_', column_name)
+            report += f"<h3>{column}</h3><ul>"
+            stats = profile.get("statistics", {})
+            for stat, value in stats.items():
+                report += f"<li><strong>{stat}:</strong> {value}</li>"
+            report += f"<li><strong>Skewness:</strong> {profile.get('skewness')}</li>"
+            report += f"<li><strong>Kurtosis:</strong> {profile.get('kurtosis')}</li>"
+            report += f"<li><strong>Outliers:</strong> {len(profile.get('outliers', []))} detected</li>"
+            report += f"<li><strong>Average (Nonzero):</strong> {profile.get('avg_nonzero'):.2f}</li>"
+            report += f"<li><strong>Number of Distinct Values:</strong> {profile.get('distinct_values')}</li>"
+            report += f"<li><strong>Most Common Values:</strong> {profile.get('most_common')}</li>"
+            report += f"<li><strong>Least Common Values:</strong> {profile.get('least_common')}</li>"
+            report += f"<li><strong>Negative Values:</strong> {profile.get('count_negative')}</li>"
+            report += f"<li><strong>Zero Values:</strong> {profile.get('count_zero')}</li>"
+            report += f"<li><strong>Blank Values:</strong> {profile.get('count_blank')}</li>"
+            report += "</ul>"
+            report += f"<img src='{plots_dir}/{column_name}_histogram.png' alt='Histogram for {column}'>"
+            report += f"<img src='{plots_dir}/{column_name}_kde_plot.png' alt='KDE Plot for {column}'>"
+            report += f"<img src='{plots_dir}/{column_name}_boxplot.png' alt='Box Plot for {column}'>"
+
+        # String Columns
+        report += "<h2>String Columns</h2>"
+        string_profiles = self.results.get("string_profiles", {})
+        for column, profile in string_profiles.items():
+            column_name = re.sub(r'[^\w\-_]', '_', column)
+            column_name = re.sub(r'__+', '_', column_name)
+            report += f"<h3>{column}</h3><ul>"
+            report += f"<li><strong>Distinct Values:</strong> {profile.get('distinct_values')}</li>"
+            report += f"<li><strong>Most Common:</strong> {profile.get('most_common')}</li>"
+            report += f"<li><strong>Least Common:</strong> {profile.get('least_common')}</li>"
+            lengths = profile.get("string_lengths", {})
+            report += f"<li><strong>String Lengths:</strong> min: {lengths.get('min')}, max: {lengths.get('max')}, mean: {lengths.get('mean'):.2f}</li>"
+            report += f"<li><strong>Duplicates Count:</strong> {profile.get('duplicates_count')}</li>"
+            report += f"<li><strong>Entropy:</strong> {profile.get('entropy'):.2f}</li>"
+            report += f"<li><strong>Dominance:</strong> {profile.get('dominance'):.2f}%</li>"
+            special_chars = profile.get("special_character_count", {})
+            for char_type, count in special_chars.items():
+                report += f"<li><strong>{char_type.capitalize()}:</strong> {count}</li>"
+            suspicious = profile.get("suspicious_data", {})
+            if suspicious:
+                report += f"<li><strong>Suspicious Data:</strong> {suspicious}</li>"
+            report += f"<li><strong>All Uppercase:</strong> {profile.get('all_uppercase_count')}</li>"
+            report += f"<li><strong>All Lowercase:</strong> {profile.get('all_lowercase_count')}</li>"
+            report += f"<li><strong>Special Characters:</strong> {profile.get('special_character_count')}</li>"
+            report += f"<li><strong>Empty Values:</strong> {profile.get('empty_vals')}</li>"
+            report += "</ul>"
+            report += f"<img src='{plots_dir}/{column_name}_columnchart_top.png' alt='Chart for {column} - Top Values'>"
+            report += f"<img src='{plots_dir}/{column_name}_columnchart_all.png' alt='Chart for {column} - With Other'>"
+            report += f"<img src='{plots_dir}/{column_name}_donut.png' alt='Donut Chart for {column} - With Other'>"
+
+        # Row Examples
+        report += "<h2>Row Examples</h2>"
+        report += "<h3>First 10 Rows</h3>"
+        report += self.df.head(10).to_html(index=False, border=1)
+
+        report += "<h3>Last 10 Rows</h3>"
+        report += self.df.tail(10).to_html(index=False, border=1)
+
+        report += "<h3>Random 20 Rows</h3>"
+        report += self.df.sample(n=20, random_state=42).to_html(index=False, border=1)
+
+        # End HTML report
+        report += "</body></html>"
+
+        # Write HTML file
+        output_file = os.path.join(self.output_dir, output_filename)
+        with open(output_file, "w") as file:
+            file.write(report)
+
+        return report
+
+    def _generate_csv_report(self, output_filename):
         # Implement CSV report generation
         pass
 

@@ -19,3 +19,6 @@ data_pipeline/Billing Dataset.xlsx
 session_cookies.pkl
 data_pipeline/Untitled-1.html
 debug_output.txt
+data_pipeline/pull_jan_17/candidate_plan_consolidation.xlsx
+data_pipeline/pull_jan_17/~$candidate_plan_consolidation.xlsx
+data_pipeline/debug_output.txt
