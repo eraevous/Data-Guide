@@ -145,6 +145,27 @@ def fetch_unresolved_claims_report(client, output_dir):
         
     print(f"Unresolved Claims Report saved to {output_path}")
 
+def fetch_schedule(client, output_dir):
+    """
+    Fetch the Schedule using a GET request.
+    """
+
+    url = "https://live6.dentrixascend.com/kpi/OVERDUE_CLAIMS"
+    params = {
+        "carrierID" : ""
+    }
+
+    data = client.make_request(url, method="GET", params=params)["data"]["claims"]
+    df = pd.json_normalize(data)
+    
+    print(df.head())
+
+    # Save to CSV
+    output_path = os.path.join(output_dir, "schedule.csv")
+    df.to_csv(output_path, index=False)
+
+    print("Schedule saved to schedule.csv")
+
 # def fetch_billing_statement_report(client, output_dir):
 #     url = "https://live6.dentrixascend.com/billingStatements"
 #     params =  {

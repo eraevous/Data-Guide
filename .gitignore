@@ -22,3 +22,6 @@ debug_output.txt
 data_pipeline/pull_jan_17/candidate_plan_consolidation.xlsx
 data_pipeline/pull_jan_17/~$candidate_plan_consolidation.xlsx
 data_pipeline/debug_output.txt
+data_pipeline/~$plan_consolidation_v1.xlsx
+data_pipeline/plan_consolidation_v1.xlsx
+data_pipeline/debug_output.txt

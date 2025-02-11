@@ -27,43 +27,66 @@ if __name__ == "__main__":
     format = sys.argv[3] if len(sys.argv) > 3 else "md"
 
     csv_files = {
-        #"aged_AR" : os.path.join(input_dir, "transformed_aged_AR.csv"),
-        #"aged_AR_long" : os.path.join(input_dir, "transformed_aged_AR_long.csv"),
-        # "statement_submission" : os.path.join(input_dir, "statement_submission_report.csv"),
-        #"integrated_payments" : os.path.join(input_dir, "transformed_integrated_payments.csv"),
+    #    "aged_AR" : os.path.join(input_dir, "transformed_aged_AR.csv"),
+    #    "aged_AR_long" : os.path.join(input_dir, "transformed_aged_AR_long.csv"),
+    #    "statement_submission" : os.path.join(input_dir, "transformed_statement_submission.csv"),
+    #    "integrated_payments" : os.path.join(input_dir, "transformed_integrated_payments.csv"),
         #"billing_statement" : os.path.join(input_dir, "billing_statement_report.csv"),
-        # "outstanding_claims" : os.path.join(input_dir, "outstanding_claims_report.csv"),
+    #    "outstanding_claims" : os.path.join(input_dir, "transformed_outstanding_claims.csv"),
         # "unresolved_claims" : os.path.join(input_dir, "unresolved_claims_report.csv"),
         #"fee_schedule" : os.path.join(input_dir, "fee_schedule.csv"),
         #"openings" : os.path.join(input_dir,"openings.csv"),
         #"schedule" : os.path.join(input_dir,"schedule.csv"),
-        #"patient_list" : os.path.join(input_dir, "transformed_patient_details.csv"),
-        # "processed_payments": os.path.join(input_dir, "ZR - Credit Card Processed Payments.csv"),
-        # "transaction_details" : os.path.join(input_dir, "ZR - Transaction Detail.csv"),
+        "patient_details" : os.path.join(input_dir, "transformed_patient_details.csv"),
+        "active_patients" : os.path.join(input_dir, "transformed_active_patient_details.csv"),
+    #    "processed_payments": os.path.join(input_dir, "transformed_processed_payments.csv"),
+    #    "payments": os.path.join(input_dir, "transformed_payments.csv"),
+    #    "incurred_charges": os.path.join(input_dir, "transformed_incurred_charges.csv"),
+    #    "transaction_details" : os.path.join(input_dir, "transformed_transaction_details.csv"),
         # "treatment_tracker" : os.path.join(input_dir, "ZR - Treatment Tracker.csv"),
-        "merged_data" : os.path.join(input_dir, "merged_data.csv"),
+        # "merged_data" : os.path.join(input_dir, "merged_data.csv"),
     }
     
     custom_types = {
         "aged_AR": {"id": "id", 'Ascend Patient ID':'id', "phoneNumber": "phone_number", "billingStatement": "id", 
-            "lastPayment.datedAs": "unix_timestamp", "guarantor" : "name", 'claimsPending': 'category',},
+            "lastPayment.datedAs": "unix_timestamp", "guarantor" : "name", 'claimsPending': 'category','remaining_guarantorPortion':'bool', 'remaining_insurancePortion':'bool'},
 
-        #"aged_AR_long": {"id": "id", 'Ascend Patient ID':'id', "Bucket" : "category", 'claimsPending': 'category',},
+        "aged_AR_long": {"id": "id", 'Ascend Patient ID':'id', "Bucket" : "category", 'Responsible Party' : 'name','Bucket' : 'category',},
 
-        "statement_submission": {"id": "id", "dateTime": "unix_timestamp", "patient.id": "id",
-                                 'patient.firstName' : 'name', 'patient.lastName' : 'name'},
+        "statement_submission": {"id": "id", "dateTime": "date", "patient.id": "id",
+                                 'patient.firstName' : 'name', 'patient.lastName' : 'name',
+                                 'neg_balances': 'category', 'possibleDuplicate': 'category'},
 
-        "patient_list": {"Ascend Patient ID": "id", "Phone": "phone_number", "Date Of Birth": "date", 
+        "patient_details": {"Ascend Patient ID": "id", "Phone": "phone_number", "Date Of Birth": "date", 
             "Prim. Subscriber ID": "id", "Address": "address", "Email": "email", "First Visit": "date", 
             "Last Visit": "date", 'Patient' : 'name', 'Primary Guarantor' : 'name', 'Primary Contact' : 'name',
             'Last Name' : 'name', 'Chart Number' : 'id',
             "Last Procedure Date": "date", "Next Appointment Date": "date",
             'student': 'category','Visit and Procedure Mismatch':'bool', 'hasNextAppointment':'bool','overdue':'bool',
             'Affiliate State':'category','Cleaned Carrier':'category', 
-            'Street':'address', 'City':'category', 'State':'category', 'ZIP Code':'category',},
+            'Street':'address', 'City':'category', 'State':'category', 'ZIP Code':'category', 'merge_key': 'id', 'Ascend Patient ID': 'id', 'Empty': 'none',
+            'DCS': 'bool', 'DNU': 'bool'},
+
+        "active_patients": {"Ascend Patient ID": "id", "Phone": "phone_number", "Date Of Birth": "date", 
+            "Prim. Subscriber ID": "id", "Address": "address", "Email": "email", "First Visit": "date", 
+            "Last Visit": "date", 'Patient' : 'name', 'Primary Guarantor' : 'name', 'Primary Contact' : 'name',
+            'Last Name' : 'name', 'Chart Number' : 'id',
+            "Last Procedure Date": "date", "Next Appointment Date": "date",
+            'student': 'category','Visit and Procedure Mismatch':'bool', 'hasNextAppointment':'bool','overdue':'bool',
+            'Affiliate State':'category','Cleaned Carrier':'category', 
+            'Street':'address', 'City':'category', 'State':'category', 'ZIP Code':'category', 'merge_key': 'id', 'Ascend Patient ID': 'id', 'Empty': 'none'},
 
         "processed_payments" : {"Date (Modified)" : "date", "Amount" : "currency", "Ascend Patient ID" : 'id',
-                                'Patient' : 'name', 'Transaction ID' : 'id'},
+                                'Patient' : 'name', 'Transaction ID' : 'id',
+                                'sort_key':'id'},
+
+        "payments" : {"Date (Modified)" : "date", "Amount" : "currency", "Ascend Patient ID" : 'id',
+                                'Patient' : 'name', 'Transaction ID' : 'id',
+                                'Extracted Insurance' : 'category', 'Extracted Card Type' : 'category','sort_key':'id'},
+
+        "incurred_charges" : {"Date (Modified)" : "date", "Amount" : "currency", "Ascend Patient ID" : 'id',
+                                'Patient' : 'name', 'Transaction ID' : 'id',
+                                'sort_key':'id'},
 
         "transaction_details" : {"Date" : "date", "Ascend Patient ID" : "id", "Charges" : "currency", 
             "Credits" : "currency", 'Patient' : 'name', 'Chart Number' : 'id'},
@@ -74,7 +97,7 @@ if __name__ == "__main__":
         "outstanding_claims" :{'id':'id', "createdDate" : "unix_timestamp", 'subscriberNumber' : 'id', "serviceDate" : "unix_timestamp",
             'insuranceCarrier.phoneNumber' : 'phone_number', 'insuranceCarrier.phoneExtension' : 'skip', "insuranceCarrier.website" : "url",
             'subscriber.id':'id', 'patient.id':'id', 'groupPlan.phoneNumber':'phone_number', 'groupPlan.phoneExtension':'skip', 
-            'subscriber.dateOfBirth' : 'unix_timestamp', 'patient.dateOfBirth' : 'unix_timestamp', 'student': 'category',
+            'subscriber.dateOfBirth' : 'unix_timestamp', 'patient.dateOfBirth' : 'unix_timestamp',
             'subscriber.firstName' : 'name', 'subscriber.lastName' : 'name', 'patient.firstName' : 'name', 'patient.lastName' : 'name'},
         
         "unresolved_claims" :{'claimId': 'id', 'carrierId': 'id', 'patientId': 'id',},
@@ -94,13 +117,8 @@ if __name__ == "__main__":
             "Last Procedure Date": "date", "Next Appointment Date": "date",
             'student': 'category','Visit and Procedure Mismatch':'bool', 'hasNextAppointment':'bool','overdue':'bool',
             'Affiliate State':'category','Cleaned Carrier':'category', 
-            'Street':'address', 'City':'category', 'State':'category', 'ZIP Code':'category',
-            "phoneNumber": "phone_number", "billingStatement": "id", 
-            "lastPayment.datedAs": "unix_timestamp", "guarantor" : "name", 'claimsPending': 'category',
-            "dateTime": "unix_timestamp", "patient.id": "id", 'hasInvalidHistories': 'category',
-            'patient.firstName' : 'name', 'patient.lastName' : 'name',
-            'merge_key' : 'id', 'merge_key_x' : 'id', 'merge_key_y' : 'id', 'id_y':'id', 'id_x':'id',
-            'remaining_guarantorPortion':'bool', 'remaining_insurancePortion':'bool'}
+            'Street':'address', 'City':'category', 'State':'category', 'ZIP Code':'category', 'neg_balances': 'category', 'possibleDuplicate': 'category', 
+            'merge_key_x': 'id', 'merge_key_y': 'id', 'Empty': 'none',}
     }
 
     # Ensure the output directory exists

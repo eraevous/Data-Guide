@@ -3,6 +3,7 @@ import os
 from profiler import DataProfiler
 from data_transform import DataTransform
 import sys
+from collections import defaultdict
 
 def load_csv_files(name, path):
     dataframes = {}
@@ -84,7 +85,12 @@ if __name__ == "__main__":
         os.makedirs(output_dir)
 
     # Load datasets
-    dataframes = {dataset: pd.read_csv(file_path) for dataset, file_path in csv_files.items()}
+    #dataframes = {dataset: pd.read_csv(file_path) for dataset, file_path in csv_files.items()}
+    dataframes = defaultdict(pd.DataFrame)
+    for dataset, file_path in csv_files.items():
+        print(f"Loading {dataset}...")
+        dataframes[dataset] = pd.read_csv(file_path)
+
 
     for df_name, df in dataframes.items():
         print(f"Processing {df_name}...")

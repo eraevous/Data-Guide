@@ -489,6 +489,8 @@ class DataProfiler:
                 self.df[column] = self.df[column].astype(str)
             elif dtype == 'bool':
                 self.df[column] = self.df[column].astype(str)
+            elif dtype == 'boolean':
+                self.df[column] = self.df[column].astype(str)
             elif dtype == 'category':
                 self.df[column] = self.df[column].astype(str)
             elif dtype == 'unix_timestamp':
