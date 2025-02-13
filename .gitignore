@@ -9,6 +9,10 @@ data_pipeline/session_cookies.pkl
 *.csv
 *.pyc
 *.png
+*.json
+*.gz
+*.zip
+*.xlsx
 data_pipeline/pull_dec_29/profiling_output/aged_ar_report.csv_profiling.md
 data_pipeline/pull_dec_29/profiling_output/integrated_payments_report.csv_profiling.md
 data_pipeline/pull_dec_29/profiling_output/statement_submission_report.csv_profiling.md
@@ -25,3 +29,7 @@ data_pipeline/debug_output.txt
 data_pipeline/~$plan_consolidation_v1.xlsx
 data_pipeline/plan_consolidation_v1.xlsx
 data_pipeline/debug_output.txt
+data_pipeline/debug_output.txt
+data_pipeline/llm/Lib/*.*
+data_pipeline/llm/Lib/*
+data_pipeline/llm/Lib/site-packages/*.*

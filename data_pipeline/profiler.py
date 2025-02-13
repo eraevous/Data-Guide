@@ -7,7 +7,9 @@ from scipy.stats import entropy
 import os
 import re
 import textwrap
+import numpy as np
 
+# Add capabilities to plot directly to terminal or window. Add helper documentation to call
 class DataProfilerPlots:
     def __init__(self, df):
         self.df = df
@@ -16,6 +18,9 @@ class DataProfilerPlots:
         """
         Helper function to wrap text for axis labels and titles.
         """
+        if isinstance(text, tuple):
+            text = " - ".join(map(str, text)) 
+
         wrapped_lines = textwrap.wrap(text, width)
         return "\n".join(wrapped_lines)
     
@@ -401,6 +406,7 @@ class StringProfiler:
             suspicious_counts[pattern] = int(matches.sum())
         return suspicious_counts
 
+# This should act more like the other analyzers and accept the whole dataframe, as well as call the plotters.
 class NumericProfiler:
     def __init__(self, column_data):
         """
@@ -422,6 +428,7 @@ class NumericProfiler:
         stats = self.col_data.describe(percentiles=[0.01, 0.05, 0.33, 0.5, 0.66, 0.95, 0.99]).to_dict()
         outliers = self.detect_outliers()
         return {
+            'total': self.col_data.sum(skipna=True),
             "distinct_values": self.col_data.nunique(),
             "statistics": {k: round(v, 2) for k, v in stats.items()},
             "skewness": round(self.col_data.skew(), 2),
@@ -432,7 +439,7 @@ class NumericProfiler:
             "count_negative": self.col_data[self.col_data < 0].count(),
             "count_zero": (self.col_data == 0).sum(),
             "avg_nonzero": self.col_data[self.col_data != 0].mean(),
-            "count_blank" : self.col_data.isna().sum()
+            "count_blank": self.col_data.isna().sum()
         }
 
     def detect_outliers(self, method='iqr'):
@@ -446,7 +453,7 @@ class NumericProfiler:
             pd.Series: A Series containing the outlier values.
         """
         if method == 'iqr':
-            q1 = self.col_data.quantile(0.25)
+            q1 = np.percentile(self.col_data.dropna(), 25)
             q3 = self.col_data.quantile(0.75)
             iqr = q3 - q1
             return self.col_data[(self.col_data < (q1 - 1.5 * iqr)) | (self.col_data > (q3 + 1.5 * iqr))]

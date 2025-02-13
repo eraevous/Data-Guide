@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-from scipy.stats import entropy, gaussian_kde, pearsonr, spearmanr, kendalltau, chi2_contingency, f_oneway, pointbiserialr, ks_2samp, f_oneway
+from scipy.stats import entropy, gaussian_kde, pearsonr, spearmanr, kendalltau, chi2_contingency, pointbiserialr, ks_2samp, f_oneway
 from statsmodels.graphics.mosaicplot import mosaic
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 from sklearn.preprocessing import LabelEncoder
@@ -14,23 +14,35 @@ import geopandas as gpd
 from esda.moran import Moran
 from esda.geary import Geary
 from sklearn.feature_selection import mutual_info_classif
+import os
 
 class BivariateProfiler:
     def __init__(self, dataframe, output_dir="bivariate_analysis"):
         self.df = dataframe
         self.output_dir = output_dir
 
-    def correlation_analysis(self, method="pearson"):
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+    def save_plot(self, plt, filename):
+        plt.savefig(f"{self.output_dir}/{filename}.png")
+        plt.close()
+
+    def correlation_analysis(self, method="pearson", impute = "mean"):
         """
         Compute correlation matrix for numeric columns.
         Supported methods: Pearson, Spearman, Kendall.
         """
-        corr_matrix = self.df.corr(method=method)
+        if impute == "mean":
+            self.df.fillna(self.df.mean(), inplace=True) 
+
+        corr_matrix = self.df.dropna().corr(method=method)
+            
         plt.figure(figsize=(10, 8))
         sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f")
         plt.title(f"{method.capitalize()} Correlation Matrix")
-        plt.savefig(f"{self.output_dir}/correlation_matrix_{method}.png")
-        plt.close()
+        self.save_plot(f"correlation_matrix_{method}.png")
+
         return corr_matrix
 
     def scatter_plot(self, x, y):
@@ -42,8 +54,8 @@ class BivariateProfiler:
         plt.title(f"Scatter Plot: {x} vs {y}")
         plt.xlabel(x)
         plt.ylabel(y)
-        plt.savefig(f"{self.output_dir}/scatter_{x}_vs_{y}.png")
-        plt.close()
+        self.save_plot(plt, f"scatter_{x}_vs_{y}")
+        
 
     def chi_square_test(self, cat1, cat2):
         """
@@ -60,8 +72,7 @@ class BivariateProfiler:
         plt.figure(figsize=(10, 6))
         mosaic(self.df, [cat1, cat2])
         plt.title(f"Mosaic Plot: {cat1} vs {cat2}")
-        plt.savefig(f"{self.output_dir}/mosaic_{cat1}_vs_{cat2}.png")
-        plt.close()
+        self.save_plot(plt, f"mosaic_{cat1}_vs_{cat2}")
 
     def box_plot(self, num, cat):
         """
@@ -70,25 +81,30 @@ class BivariateProfiler:
         plt.figure(figsize=(8, 6))
         sns.boxplot(x=self.df[cat], y=self.df[num])
         plt.title(f"Box Plot: {num} by {cat}")
-        plt.savefig(f"{self.output_dir}/boxplot_{num}_by_{cat}.png")
-        plt.close()
+        self.save_plot(plt, f"boxplot_{num}_by_{cat}")
 
     def anova_test(self, num, cat):
         """
         Perform ANOVA (F-test) to test numeric variable differences across categorical groups.
         """
         groups = [self.df[self.df[cat] == level][num] for level in self.df[cat].unique()]
+        if any(len(group) < 2 for group in groups):
+            return {"error": "ANOVA requires at least two values per group"}
+        
         f_stat, p_value = f_oneway(*groups)
         return {"f_stat": f_stat, "p_value": p_value}
 
     def compute_vif(self):
-        """
-        Compute Variance Inflation Factor (VIF) for detecting multicollinearity.
-        """
         numeric_cols = self.df.select_dtypes(include=[np.number])
+        if numeric_cols.shape[1] < 2:
+            return "Insufficient numeric columns for VIF calculation"
+        
         vif_data = pd.DataFrame()
         vif_data["Variable"] = numeric_cols.columns
-        vif_data["VIF"] = [variance_inflation_factor(numeric_cols.values, i) for i in range(numeric_cols.shape[1])]
+        vif_data["VIF"] = [
+            variance_inflation_factor(numeric_cols.values, i) if np.linalg.cond(numeric_cols.values) < 1e10 else np.inf
+            for i in range(numeric_cols.shape[1])
+        ]
         return vif_data
 
     def cramers_v(self, cat1, cat2):
@@ -146,8 +162,7 @@ class BivariateProfiler:
         plt.figure(figsize=(12, 6))
         parallel_coordinates(self.df[numeric_cols.to_list() + [class_column]], class_column, colormap=plt.get_cmap("tab10"))
         plt.title("Parallel Coordinates Plot")
-        plt.savefig(f"{self.output_dir}/parallel_coordinates.png")
-        plt.close()
+        self.save_plot(plt, f"parallel_coordinates")
 
     def sankey_plot(self, cat1, cat2):
         """
@@ -163,7 +178,7 @@ class BivariateProfiler:
             link=dict(source=source, target=target, value=counts['count'])
         ))
         fig.update_layout(title_text=f"Sankey Diagram: {cat1} → {cat2}")
-        fig.write_image(f"{self.output_dir}/sankey_{cat1}_vs_{cat2}.png")
+        self.save_plot(plt, f"sankey_{cat1}_vs_{cat2}")
 
     def stacked_density_plot(self, numeric_col, category_col):
         """
@@ -180,8 +195,7 @@ class BivariateProfiler:
         plt.xlabel(numeric_col)
         plt.ylabel("Density")
         plt.legend()
-        plt.savefig(f"{self.output_dir}/stacked_density_{numeric_col}_by_{category_col}.png")
-        plt.close()
+        self.save_plot(plt, f"stacked_density_{numeric_col}_by_{category_col}")
 
     def hexbin_plot(self, x, y):
         """
@@ -193,16 +207,14 @@ class BivariateProfiler:
         plt.title(f"Hexbin Plot: {x} vs {y}")
         plt.xlabel(x)
         plt.ylabel(y)
-        plt.savefig(f"{self.output_dir}/hexbin_{x}_vs_{y}.png")
-        plt.close()
+        self.save_plot(plt, f"hexbin_{x}_vs_{y}")
 
     def pairplot(self):
         """
         Generate a Pairplot to visualize pairwise numeric relationships.
         """
         sns.pairplot(self.df)
-        plt.savefig(f"{self.output_dir}/pairplot.png")
-        plt.close()
+        self.save_plot(plt, f"pairplot")
 
     def point_biserial_corr(self, numeric_col, binary_col):
         """Compute Point-Biserial Correlation between a numeric and binary categorical variable."""
@@ -232,6 +244,63 @@ class BivariateProfiler:
         geary_c = Geary(geo_df[value_col].values, w_matrix)
         return {"Moran's I": moran_i.I, "Geary's C": geary_c.C}
 
+    def bayesian_ab_test(self, category_col, metric_col, group_a, group_b):
+        """
+        Perform Bayesian A/B testing to compare two categorical groups.
+        """
+        data_a = self.df[self.df[category_col] == group_a][metric_col].dropna()
+        data_b = self.df[self.df[category_col] == group_b][metric_col].dropna()
+        
+        with pm.Model() as model:
+            mu_a = pm.Normal("mu_a", mu=np.mean(data_a), sigma=np.std(data_a))
+            mu_b = pm.Normal("mu_b", mu=np.mean(data_b), sigma=np.std(data_b))
+            diff = pm.Deterministic("difference", mu_b - mu_a)
+            trace = pm.sample(2000, return_inferencedata=True)
+        
+        pm.plot_posterior(trace, var_names=["difference"])
+        plt.title(f"Bayesian A/B Test: {group_a} vs {group_b}")
+        self.save_plot(plt, f"bayesian_ab_{group_a}_vs_{group_b}")
+    
+    def multidimensional_scaling(self, numeric_cols, n_components=2):
+        """
+        Perform Multidimensional Scaling (MDS) to visualize high-dimensional relationships.
+        """
+        mds = MDS(n_components=n_components, random_state=42)
+        scaled_data = mds.fit_transform(self.df[numeric_cols].dropna())
+        
+        plt.figure(figsize=(10, 6))
+        plt.scatter(scaled_data[:, 0], scaled_data[:, 1], alpha=0.7)
+        plt.title("Multidimensional Scaling (MDS)")
+        plt.xlabel("Dimension 1")
+        plt.ylabel("Dimension 2")
+        self.save_plot(plt, f"mds_visualization")
+    
+    def interaction_plot_analysis(self, category_col, numeric_col, group_col):
+        """
+        Generate an interaction plot to visualize relationships between variables.
+        """
+        plt.figure(figsize=(10, 6))
+        interaction_plot(self.df[category_col], self.df[group_col], self.df[numeric_col], markers=['D', '^'], ms=8)
+        plt.title(f"Interaction Plot: {numeric_col} by {category_col} and {group_col}")
+        self.save_plot(plt, f"interaction_plot_{numeric_col}")
+
+    def pca_analysis(self, num_components=2):
+        numeric_cols = self.df.select_dtypes(include=[np.number]).dropna()
+        pca = PCA(n_components=num_components)
+        components = pca.fit_transform(numeric_cols)
+        
+        plt.figure(figsize=(8,6))
+        plt.scatter(components[:, 0], components[:, 1], alpha=0.7)
+        plt.title("PCA Analysis")
+        plt.xlabel("Principal Component 1")
+        plt.ylabel("Principal Component 2")
+        self.save_plot(plt, "pca_analysis")
+
+class AdvancedBivariateAnalysis:
+    def __init__(self, dataframe, output_dir="bivariate_analysis"):
+        self.df = dataframe
+        self.output_dir = output_dir
+    
     def bayesian_ab_test(self, category_col, metric_col, group_a, group_b):
         """
         Perform Bayesian A/B testing to compare two categorical groups.

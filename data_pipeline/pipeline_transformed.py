@@ -27,24 +27,28 @@ if __name__ == "__main__":
     format = sys.argv[3] if len(sys.argv) > 3 else "md"
 
     csv_files = {
-    #    "aged_AR" : os.path.join(input_dir, "transformed_aged_AR.csv"),
-    #    "aged_AR_long" : os.path.join(input_dir, "transformed_aged_AR_long.csv"),
-    #    "statement_submission" : os.path.join(input_dir, "transformed_statement_submission.csv"),
-    #    "integrated_payments" : os.path.join(input_dir, "transformed_integrated_payments.csv"),
+        "aged_AR" : os.path.join(input_dir, "transformed_aged_AR.csv"),
+        "aged_AR_long" : os.path.join(input_dir, "transformed_aged_AR_long.csv"),
+        "statement_submission" : os.path.join(input_dir, "transformed_statement_submission.csv"),
+        "integrated_payments" : os.path.join(input_dir, "transformed_integrated_payments.csv"),
         #"billing_statement" : os.path.join(input_dir, "billing_statement_report.csv"),
-    #    "outstanding_claims" : os.path.join(input_dir, "transformed_outstanding_claims.csv"),
+        "outstanding_claims" : os.path.join(input_dir, "transformed_outstanding_claims.csv"),
         # "unresolved_claims" : os.path.join(input_dir, "unresolved_claims_report.csv"),
         #"fee_schedule" : os.path.join(input_dir, "fee_schedule.csv"),
         #"openings" : os.path.join(input_dir,"openings.csv"),
         #"schedule" : os.path.join(input_dir,"schedule.csv"),
         "patient_details" : os.path.join(input_dir, "transformed_patient_details.csv"),
         "active_patients" : os.path.join(input_dir, "transformed_active_patient_details.csv"),
-    #    "processed_payments": os.path.join(input_dir, "transformed_processed_payments.csv"),
-    #    "payments": os.path.join(input_dir, "transformed_payments.csv"),
-    #    "incurred_charges": os.path.join(input_dir, "transformed_incurred_charges.csv"),
-    #    "transaction_details" : os.path.join(input_dir, "transformed_transaction_details.csv"),
+        "processed_payments": os.path.join(input_dir, "transformed_processed_payments.csv"),
+        "payments": os.path.join(input_dir, "transformed_payments.csv"),
+        "incurred_charges": os.path.join(input_dir, "transformed_incurred_charges.csv"),
+        "transaction_details" : os.path.join(input_dir, "transformed_transaction_details.csv"),
         # "treatment_tracker" : os.path.join(input_dir, "ZR - Treatment Tracker.csv"),
         # "merged_data" : os.path.join(input_dir, "merged_data.csv"),
+        'carrier_decision_data' : os.path.join(input_dir, 'Carrier_Decision_Data.csv'),
+        'insurance_payment_metrics' : os.path.join(input_dir, 'insurance_payment_metrics.csv'),
+        "financial_timeline" : os.path.join(input_dir, "financial_timeline.csv"),
+        'time_to_payments' : os.path.join(input_dir, "time_to_payments.csv"),
     }
     
     custom_types = {
@@ -74,7 +78,7 @@ if __name__ == "__main__":
             "Last Procedure Date": "date", "Next Appointment Date": "date",
             'student': 'category','Visit and Procedure Mismatch':'bool', 'hasNextAppointment':'bool','overdue':'bool',
             'Affiliate State':'category','Cleaned Carrier':'category', 
-            'Street':'address', 'City':'category', 'State':'category', 'ZIP Code':'category', 'merge_key': 'id', 'Ascend Patient ID': 'id', 'Empty': 'none'},
+            'Street':'address', 'City':'category', 'State':'category', 'ZIP Code':'category', 'merge_key': 'id', 'Ascend Patient ID': 'id', 'Empty': 'none', 'DCS': 'bool', 'DNU': 'bool'},
 
         "processed_payments" : {"Date (Modified)" : "date", "Amount" : "currency", "Ascend Patient ID" : 'id',
                                 'Patient' : 'name', 'Transaction ID' : 'id',
@@ -118,7 +122,12 @@ if __name__ == "__main__":
             'student': 'category','Visit and Procedure Mismatch':'bool', 'hasNextAppointment':'bool','overdue':'bool',
             'Affiliate State':'category','Cleaned Carrier':'category', 
             'Street':'address', 'City':'category', 'State':'category', 'ZIP Code':'category', 'neg_balances': 'category', 'possibleDuplicate': 'category', 
-            'merge_key_x': 'id', 'merge_key_y': 'id', 'Empty': 'none',}
+            'merge_key_x': 'id', 'merge_key_y': 'id', 'Empty': 'none',},
+        
+        'carrier_decision_data' : {'carrierId': 'id', 'carrierName': 'name', 'carrierState': 'category', 'carrierType': 'category'},
+        'insurance_payment_metrics' : {'carrierId': 'id', 'carrierName': 'name', 'carrierState': 'category', 'carrierType': 'category'},
+        'financial_timeline' : {'id': 'id', 'date': 'date', 'event': 'category', 'amount': 'currency', 'balance': 'currency'},
+        'time_to_payments' : {'id': 'id', 'date': 'date', 'event': 'category', 'amount': 'currency', 'balance': 'currency'},
     }
 
     # Ensure the output directory exists
