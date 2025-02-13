@@ -8,6 +8,7 @@ import os
 import re
 import textwrap
 
+# Add capabilities to plot directly to terminal or window. Add helper documentation to call
 class DataProfilerPlots:
     def __init__(self, df):
         self.df = df
@@ -16,6 +17,9 @@ class DataProfilerPlots:
         """
         Helper function to wrap text for axis labels and titles.
         """
+        if isinstance(text, tuple):
+            text = " - ".join(map(str, text)) 
+
         wrapped_lines = textwrap.wrap(text, width)
         return "\n".join(wrapped_lines)
     
@@ -401,6 +405,7 @@ class StringProfiler:
             suspicious_counts[pattern] = int(matches.sum())
         return suspicious_counts
 
+# This should act more like the other analyzers and accept the whole dataframe, as well as call the plotters.
 class NumericProfiler:
     def __init__(self, column_data):
         """
