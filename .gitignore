@@ -5,7 +5,6 @@ data_pipeline/config.json
 data_pipeline/cookie.json
 data_pipeline/session_cookies.pkl
 
-# Optional: Ignore all .csv files
 *.csv
 *.pyc
 *.png
@@ -13,6 +12,7 @@ data_pipeline/session_cookies.pkl
 *.gz
 *.zip
 *.xlsx
+*.exe
 data_pipeline/pull_dec_29/profiling_output/aged_ar_report.csv_profiling.md
 data_pipeline/pull_dec_29/profiling_output/integrated_payments_report.csv_profiling.md
 data_pipeline/pull_dec_29/profiling_output/statement_submission_report.csv_profiling.md
@@ -33,3 +33,7 @@ data_pipeline/debug_output.txt
 data_pipeline/llm/Lib/*.*
 data_pipeline/llm/Lib/*
 data_pipeline/llm/Lib/site-packages/*.*
+data_pipeline/llm/*.*
+data_pipeline/llm/*
+data_pipeline/llm/Scripts/*.*
+data_pipeline/llm/Scripts/*
