@@ -7,6 +7,9 @@ data_pipeline/session_cookies.pkl
 
 *.csv
 *.pyc
+*.txt
+*.json
+*.ipynb
 *.png
 *.json
 *.gz
