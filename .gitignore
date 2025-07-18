@@ -1,9 +1,8 @@
-# Ignore all files in the data/raw/ and data/processed/ directories
-data/raw/
-data/processed/
-data_pipeline/config.json
-data_pipeline/cookie.json
-data_pipeline/session_cookies.pkl
+# Ignore all files in the data/ and config/ directories
+# This prevents committing PHI/PII, secret keys, and other sensitive information
+# as well as large datasets that are not needed in the repository.
+data/
+config/
 
 *.csv
 *.pyc
@@ -16,27 +15,8 @@ data_pipeline/session_cookies.pkl
 *.zip
 *.xlsx
 *.exe
-data_pipeline/pull_dec_29/profiling_output/aged_ar_report.csv_profiling.md
-data_pipeline/pull_dec_29/profiling_output/integrated_payments_report.csv_profiling.md
-data_pipeline/pull_dec_29/profiling_output/statement_submission_report.csv_profiling.md
-Bar Chart for generatedFrom.png
-Bar Chart for Chart Number.png
-Bar Chart for First Visit.png
-data_pipeline/Billing Dataset.xlsx
-session_cookies.pkl
-data_pipeline/Untitled-1.html
-debug_output.txt
-data_pipeline/pull_jan_17/candidate_plan_consolidation.xlsx
-data_pipeline/pull_jan_17/~$candidate_plan_consolidation.xlsx
-data_pipeline/debug_output.txt
-data_pipeline/~$plan_consolidation_v1.xlsx
-data_pipeline/plan_consolidation_v1.xlsx
-data_pipeline/debug_output.txt
-data_pipeline/debug_output.txt
-data_pipeline/llm/Lib/*.*
-data_pipeline/llm/Lib/*
-data_pipeline/llm/Lib/site-packages/*.*
-data_pipeline/llm/*.*
-data_pipeline/llm/*
-data_pipeline/llm/Scripts/*.*
-data_pipeline/llm/Scripts/*
+*.html
+
+# Ignore all files in the data_pipeline/llm/ directory
+# This is to prevent committing large model files or temporary files
+src/data_pipeline/llm/*
