@@ -104,6 +104,7 @@ Consolidate during Drift into `.purpose.md`.
 
 | ID   | Rule                                                                                                       |
 | ---- | ---------------------------------------------------------------------------------------------------------- |
+| G-00 | If no valid .purpose files exist re "purpose_template.md" -> generate new .purpose files from the codebase |
 | G-01 | No commits to `main` without valid `.purpose.md` present or stubbed                                        |
 | G-02 | If AST IO != `.purpose.md`, raise and draft reconciliation                                                 |
 | G-03 | If `@ai-risk-*` is high or unknown, require human checkoff                                                 |
