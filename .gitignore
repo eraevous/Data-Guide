@@ -20,3 +20,5 @@ config/
 # Ignore all files in the data_pipeline/llm/ directory
 # This is to prevent committing large model files or temporary files
 src/data_pipeline/llm/*
+
+!ast_deps.csv
