@@ -16,9 +16,11 @@ config/
 *.xlsx
 *.exe
 *.html
+*.trace.*
 
 # Ignore all files in the data_pipeline/llm/ directory
 # This is to prevent committing large model files or temporary files
 src/data_pipeline/llm/*
+/debug_and_traces/*
 
 !ast_deps.csv
