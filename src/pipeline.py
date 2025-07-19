@@ -1,8 +1,16 @@
-import pandas as pd
 import os
+import sys
+import pandas as pd
+
 from profiler import DataProfiler
 from data_transform import DataTransform
-import sys
+from data_pipeline.bivariate_profiler import BivariateProfiler
+from data_pipeline.config import (
+    get_csv_paths,
+    CUSTOM_TYPES,
+    INPUT_DIR,
+    OUTPUT_DIR,
+)
 
 def load_csv_files(file_paths):
     """Load multiple CSV files into a dictionary keyed by filename."""
@@ -23,43 +31,11 @@ if __name__ == "__main__":
         print("Usage: main.py <input_dif> (optional) <output_dir> (optional)")
         sys.exit(1)
 
-    input_dir = sys.argv[1] if len(sys.argv) > 1 else "input"
-    output_dir = sys.argv[2] if len(sys.argv) > 2 else "output"
+    input_dir = sys.argv[1] if len(sys.argv) > 1 else INPUT_DIR
+    output_dir = sys.argv[2] if len(sys.argv) > 2 else OUTPUT_DIR
 
-    csv_files = {
-        "aged_AR" : os.path.join(input_dir, "aged_ar_report.csv"),
-        "statement_submission" : os.path.join(input_dir, "statement_submission_report.csv"),
-        "integrated_payments" : os.path.join(input_dir, "integrated_payments_report.csv"),
-        #"billing_statement" : os.path.join(input_dir, "billing_statement_report.csv"),
-        "outstanding_claims" : os.path.join(input_dir, "outstanding_claims_report.csv"),
-        "unresolved_claims" : os.path.join(input_dir, "unresolved_claims_report.csv"),
-        #"fee_schedule" : os.path.join(input_dir, "fee_schedule.csv"),
-        #"openings" : os.path.join(input_dir,"openings.csv"),
-        #"schedule" : os.path.join(input_dir,"schedule.csv"),
-        "patient_list" : os.path.join(input_dir, "ZR - Patient List with Details.csv"),
-        "processed_payments": os.path.join(input_dir, "ZR - Credit Card Processed Payments.csv"),
-        "transaction_details" : os.path.join(input_dir, "ZR - Transaction Detail.csv"),
-        "treatment_tracker" : os.path.join(input_dir, "ZR - Treatment Tracker.csv"),
-    }
-    custom_types = {
-        "aged_AR": {"id": "id", "phoneNumber": "phone_number", "billingStatement": "id", 
-            "lastPayment.datedAs": "unix_timestamp"},
-        "statement_submission": {"id": "id", "dateTime": "unix_timestamp", "patient.id": "id"},
-        "patient_list": {"Ascend Patient ID": "id", "Phone": "phone_number", "Date Of Birth": "date", 
-            "Prim. Subscriber ID": "id", "Address": "address", "Email": "email", "First Visit": "date", 
-            "Last Visit": "date", 
-            "Last Procedure Date": "date", "Next Appointment Date": "date"},
-        "processed_payments" : {"Date (Modified)" : "date", "Amount" : "currency", "Ascend Patient ID" : 'id'},
-        "transaction_details" : {"Date" : "date", "Ascend Patient ID" : "id", "Charges" : "currency", 
-            "Credits" : "currency"},
-        "treatment_tracker" : {"Ascend Patient ID" : "id", "Date" : "date", "Amount Presented" : "currency"},
-        "outstanding_claims" :{'id':'id', "createdDate" : "unix_timestamp", 'subscriberNumber' : 'id', "serviceDate" : "unix_timestamp",
-            'insuranceCarrier.phoneNumber' : 'phone_number', 'insuranceCarrier.phoneExtension' : 'skip', "insuranceCarrier.website" : "url",
-            'subscriber.id':'id', 'patient.id':'id', 'groupPlan.phoneNumber':'phone_number', 'groupPlan.phoneExtension':'skip', 
-            'subscriber.dateOfBirth' : 'unix_timestamp', 'patient.dateOfBirth' : 'unix_timestamp',},
-        "unresolved_claims" :{'claimId': 'id', 'carrierId': 'id', 'patientId': 'id'},
-        "integrated_payments" :{'id': 'id', 'transactionDateTime': 'unix_timestamp','transactionId': 'id'},
-    }
+    csv_files = get_csv_paths(input_dir)
+    custom_types = CUSTOM_TYPES
 
     # Ensure the output directory exists
     if not os.path.exists(output_dir):
@@ -75,10 +51,17 @@ if __name__ == "__main__":
 
         # Step 1: Profile raw data
         print("Profiling raw data...")
-        profiler = DataProfiler(df, custom_types=custom_types.get(df_name, {}), output_dir=f"{output_dir}/{df_name}/")
+        profiler = DataProfiler(
+            df,
+            custom_types=custom_types.get(df_name, {}),
+            output_dir=f"{output_dir}/{df_name}/",
+        )
         profiler.profile_dataset()
         raw_report = profiler.generate_report("markdown", f"{df_name} raw data.md")
-        #save_report(raw_report, output_dir, f"{df_name}_raw_data_profile.md")
+
+        # Bivariate analysis
+        bivariate = BivariateProfiler(df, output_dir=f"{output_dir}/{df_name}/bivariate")
+        bivariate.correlation_analysis()
 
         # # Step 2: Transform data
         # print("Transforming data...")

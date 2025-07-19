@@ -46,11 +46,12 @@
 - pandas, numpy, seaborn, matplotlib
 - missingno
 - modules within repo: `profiler` for plotting utilities
+- optional: `BivariateProfiler` for pairwise analysis
 
 ---
 
 ### 🗣 Dialogic Notes
-- Current implementation mixes global helper functions and class methods.
+- Combines column profiling with optional bivariate analysis.
 - Assumes small to medium data size; may require sampling for large datasets.
 
 ---

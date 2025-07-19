@@ -41,7 +41,7 @@ class BivariateProfiler:
         plt.figure(figsize=(10, 8))
         sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f")
         plt.title(f"{method.capitalize()} Correlation Matrix")
-        self.save_plot(f"correlation_matrix_{method}.png")
+        self.save_plot(plt, f"correlation_matrix_{method}")
 
         return corr_matrix
 

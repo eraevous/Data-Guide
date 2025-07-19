@@ -8,14 +8,14 @@
 - @ai-path: pipeline
 - @ai-source-files: [pipeline.py]
 - @ai-role: orchestrator
-- @ai-intent: "CLI orchestration to profile multiple CSVs"
+- @ai-intent: "CLI orchestration using config-driven dataset definitions and bivariate profiling"
 - @ai-version: 0.1.0
 - @ai-generated: true
 - @ai-verified: false
 - @schema-version: 0.3
 - @ai-risk-pii: medium
 - @ai-risk-performance: low
-- @ai-risk-drift: "Hard-coded file paths; may break when directory layout changes"
+- @ai-risk-drift: "Depends on external config for paths; must match environment"
 - @ai-used-by: developer
 - @ai-downstream: data_profiler
 
@@ -25,10 +25,10 @@
 ---
 
 ### 🎯 Intent & Responsibility
-- Load CSV files from a user-specified directory
-- Apply custom type hints per dataset
-- Invoke `DataProfiler` to profile and generate markdown
-- Write resulting reports to an output directory
+- Load dataset paths and type hints from `data_pipeline.config`
+- Invoke `DataProfiler` for univariate analysis
+- Run `BivariateProfiler` for correlation heatmaps
+- Write resulting reports and plots to an output directory
 
 ---
 
@@ -38,33 +38,38 @@
 | 📥 In | input_dir | `str` | folder containing CSV files |
 | 📥 In | output_dir | `str` | folder for report output |
 | 📤 Out | reports | `List[str]` | file paths to generated reports |
+| 📤 Out | bivariate_plots | `List[str]` | correlation heatmaps |
 
 ---
 
 ### 🔗 Dependencies
 - pandas
 - os, sys
+- `data_pipeline.config` for dataset mappings
 - `DataProfiler` from `data_profiler`
+- `BivariateProfiler` for pairwise analysis
 
 ---
 
 ### 🗣 Dialogic Notes
-- Contains many commented blocks and may require cleanup
-- Should decouple dataset definitions from code
+- Uses configuration module to avoid hard-coded paths
+- Bivariate step currently limited to correlation heatmaps
 
 ---
 
 ### 9 Pipeline Integration
 #### Coordination Mechanics
 - Acts as entry script when executed directly
-- Loops over dataset map and calls DataProfiler sequentially
+- Resolves dataset paths via config
+- Runs DataProfiler then BivariateProfiler sequentially
 
 #### Integration Points
 - Upstream: CSV data prepared by ETL scripts
-- Downstream: generated markdown or HTML reports
+- Downstream: DataProfiler reports and bivariate plots
 
 #### Risks
 - Execution may be slow for large numbers of files
+- Correlation matrices may consume memory on wide datasets
 
 ---
 
