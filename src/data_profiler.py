@@ -54,7 +54,9 @@ class DataProfiler:
         # Implement phone number parsing logic here
         return value  # Placeholder implementation   
 
+    @staticmethod
     def profile_phone_numbers(df, phone_column):
+        """Return counts of valid and invalid phone numbers in a column."""
         valid_count = 0
         invalid_count = 0
         for number in df[phone_column]:
@@ -77,6 +79,7 @@ class DataProfiler:
         except Exception as e:
             self.results["dataset_metadata"] = {"error": str(e)}
     
+    @staticmethod
     def detect_outliers(series, method='iqr'):
         if method == 'iqr':
             q1 = series.quantile(0.25)

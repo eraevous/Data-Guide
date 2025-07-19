@@ -5,7 +5,8 @@ from data_transform import DataTransform
 import sys
 from collections import defaultdict
 
-def load_csv_files(name, path):
+def load_csv_files(file_paths):
+    """Load multiple CSV files into a dictionary keyed by filename."""
     dataframes = {}
     for file_path in file_paths:
         df_name = os.path.basename(file_path).replace(".csv", "")

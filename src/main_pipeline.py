@@ -11,7 +11,7 @@ if __name__ == "__main__":
     print("Profiling raw data...")
     raw_profiler = DataProfiler(df_raw)
     raw_profiler.profile_dataset()
-    raw_profiler.generate_markdown_report("raw_data_profile.md")
+    raw_profiler.generate_report(format="markdown", output_filename="raw_data_profile.md")
 
     # Step 2: Clean and transform data
     print("Transforming data...")
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     print("Profiling transformed data...")
     transformed_profiler = DataProfiler(df_transformed)
     transformed_profiler.profile_dataset()
-    transformed_profiler.generate_markdown_report("transformed_data_profile.md")
+    transformed_profiler.generate_report(format="markdown", output_filename="transformed_data_profile.md")
 
     # Final output
     print("Pipeline execution complete. Reports generated.")
