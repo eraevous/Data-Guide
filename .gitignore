@@ -8,7 +8,6 @@ config/
 *.pyc
 *.txt
 *.json
-*.ipynb
 *.png
 *.json
 *.gz
