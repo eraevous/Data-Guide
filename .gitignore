@@ -24,3 +24,4 @@ src/data_pipeline/llm/*
 /debug_and_traces/*
 
 !ast_deps.csv
+!requirements.txt

@@ -1,0 +1,16 @@
+pandas
+numpy
+scipy
+matplotlib
+seaborn
+missingno
+phonenumbers
+statsmodels
+scikit-learn
+geopandas
+esda
+requests
+beautifulsoup4
+python-magic
+markdown
+pdfplumber
