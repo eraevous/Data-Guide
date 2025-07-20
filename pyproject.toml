@@ -4,7 +4,22 @@ version = "0.0.1"
 description = "Accelerated and Augmented EDA"
 authors = [{ name = "Zach" }]
 dependencies = [
-
+  "pandas",
+  "numpy",
+  "scipy",
+  "matplotlib",
+  "seaborn",
+  "missingno",
+  "phonenumbers",
+  "statsmodels",
+  "scikit-learn",
+  "geopandas",
+  "esda",
+  "requests",
+  "beautifulsoup4",
+  "python-magic",
+  "markdown",
+  "pdfplumber"
 ]
 
 [project.scripts]
@@ -15,4 +30,3 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-
