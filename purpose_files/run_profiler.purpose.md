@@ -8,14 +8,14 @@
 - @ai-path: run_profiler
 - @ai-source-files: [run_profiler.py]
 - @ai-role: cli
-- @ai-intent: "Simple entry script to profile local CSVs"
+- @ai-intent: "Argparse CLI to profile CSV files in a folder"
 - @ai-version: 0.1.0
 - @ai-generated: true
 - @ai-verified: false
 - @schema-version: 0.3
 - @ai-risk-pii: low
 - @ai-risk-performance: low
-- @ai-risk-drift: "Assumes hard-coded paths to data"
+- @ai-risk-drift: "Paths provided via CLI arguments"
 - @ai-used-by: developer
 - @ai-downstream: markdown_reports
 
@@ -47,7 +47,7 @@
 ---
 
 ### 🗣 Dialogic Notes
-- Minimal script; duplicates functionality of `pipeline.py`
+- Streamlined CLI wrapper around `DataProfiler`
 
 ---
 
@@ -60,7 +60,7 @@
 - Downstream: Markdown reports for review
 
 #### Risks
-- Hard-coded output directories may fail if not existent
+- Relies on user-supplied paths and valid CSV files
 
 ---
 
