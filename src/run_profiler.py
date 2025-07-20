@@ -1,41 +1,41 @@
-import pandas as pd
-from data_profiler import DataProfiler  # Ensure this matches the actual file name and class name
+"""Command line helper for profiling CSV files in a folder."""
+
+import argparse
 import os
+from pathlib import Path
 
-# define dataset path and output directory
+import pandas as pd
 
-data_path = "C:/Users/Admin/Documents/GitHub/Data-Guide/data_pipeline/pull_dec_29"
-output_dir = "C:/Users/Admin/Documents/GitHub/Data-Guide/data_pipeline/pull_dec_29/profiling_output"
+from data_profiler import DataProfiler
 
-# Ensure the output directory exists
-if not os.path.exists(output_dir):
-    os.makedirs(output_dir)
 
-# defined datasets
-datasets = ["aged_ar_report.csv", "statement_submission_report.csv", "integrated_payments_report.csv"] 
+def profile_folder(input_dir: Path, output_dir: Path) -> None:
+    """Profile each CSV file in ``input_dir`` and write markdown reports."""
 
-# Load the CSV file into a DataFrame
-for d in datasets:
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-    df = pd.read_csv(os.path.join(data_path, d))
+    csv_files = [p for p in input_dir.glob("*.csv")]
+    for csv_path in csv_files:
+        df = pd.read_csv(csv_path)
 
-    # Initialize the DataProfiler with the DataFrame
-    profiler = DataProfiler(df)
+        profiler = DataProfiler(df)
+        profiler.profile_dataset()
+        profiler.profile_columns()
+        report = profiler.generate_report(format="markdown")
 
-    # Profile the dataset and columns
-    profiler.profile_dataset()
-    profiler.profile_columns()
+        report_name = csv_path.stem + "_profiling.md"
+        with open(output_dir / report_name, "w") as f:
+            f.write(report)
 
-    markdown_report = profiler.generate_report(format="markdown")
 
-    # Generate and print the Markdown report
-    with open(os.path.join(output_dir, f"{d}_profiling.md"), "w") as f:
-        f.write(markdown_report)
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Profile all CSVs in a folder")
+    parser.add_argument("input_dir", type=Path, help="Directory containing CSV files")
+    parser.add_argument("output_dir", type=Path, help="Directory for markdown reports")
+    args = parser.parse_args()
 
-# Optionally, generate and print the HTML report
-# html_report = profiler.generate_report(format="html")
-# print(html_report)
+    profile_folder(args.input_dir, args.output_dir)
 
-# Optionally, generate and print the CSV report
-# csv_report = profiler.generate_report(format="csv")
-# print(csv_report)
+
+if __name__ == "__main__":
+    main()
