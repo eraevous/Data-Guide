@@ -19,7 +19,9 @@ dependencies = [
   "beautifulsoup4",
   "python-magic",
   "markdown",
-  "pdfplumber"
+  "pdfplumber",
+  "typer",
+  "pyyaml"
 ]
 
 [project.scripts]
