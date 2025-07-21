@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-from profiler import DataProfiler
+from data_profiler import DataProfiler
 from data_transform import DataTransform
 import sys
 from collections import defaultdict

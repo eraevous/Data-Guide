@@ -13,8 +13,10 @@ This document outlines how to consolidate overlapping modules and remove dead co
    - Keep `data_profiler.py` as the canonical implementation.
    - Merge useful features from `profiler.py` and `profiler_update.py` then delete those modules.
    - Update import paths throughout the pipeline.
+   - ✅ `profiler_update.py` removed; pipelines now import `DataProfiler` from `data_profiler`.
 2. **Transformation utilities**
    - Merge `data_transform.py` and `data_pipeline/data_transform.py` into a single module.
+   - ✅ duplicate module under `data_pipeline/` removed.
 3. **Script cleanup**
    - Replace hard‑coded paths with argparse based CLIs (see updated `run_profiler.py`).
    - Remove terminal prompts from files and add basic error handling.

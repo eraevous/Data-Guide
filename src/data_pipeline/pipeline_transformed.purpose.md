@@ -41,7 +41,7 @@
 
 ### 🔗 Dependencies
 - pandas
-- DataProfiler
+- DataProfiler (from `data_profiler`)
 - DataTransform
 - os, sys
 

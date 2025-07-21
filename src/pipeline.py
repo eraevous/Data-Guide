@@ -2,7 +2,7 @@ import os
 import sys
 import pandas as pd
 
-from profiler import DataProfiler
+from data_profiler import DataProfiler
 from data_transform import DataTransform
 from data_pipeline.bivariate_profiler import BivariateProfiler
 from data_pipeline.config import (
