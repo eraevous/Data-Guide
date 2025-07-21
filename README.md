@@ -23,6 +23,7 @@ Individual profiling can be executed with:
 ```bash
 python src/run_profiler.py
 ```
+The main pipelines now import `DataProfiler` from `data_profiler` after consolidation.
 Example notebooks and templates are provided under `templates/`.
 
 ## Documentation
