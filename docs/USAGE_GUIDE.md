@@ -13,7 +13,10 @@ This guide outlines common workflows for generating Data Guides.
    Reports and plots are written to the specified output directory.
 
 3. **Custom Profiling**
-   - Use `DataProfiler` directly for single DataFrames.
-   - Results can be converted to markdown via `generate_report()`.
+   - Run the Typer CLI with a config file:
+   ```bash
+   python src/profiler_cli.py profile --config my_config.json --output-dir reports
+   ```
+   - You can also use `DataProfiler` directly for single DataFrames and call `generate_report()`.
 
 See the template in `templates/data_guide_template.md` for report structure.

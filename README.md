@@ -19,9 +19,10 @@ Run the CLI pipeline on a folder of CSV files:
 ```bash
 python src/pipeline.py <input_dir> <output_dir>
 ```
-Individual profiling can now be run via a Typer CLI:
+Individual profiling can be executed with the Typer CLI:
 ```bash
-python src/typer_cli.py profile config.yml
+python src/profiler_cli.py profile --config my_config.json --output-dir reports
+
 ```
 The main pipelines now import `DataProfiler` from `data_profiler` after consolidation.
 Example notebooks and templates are provided under `templates/`.
