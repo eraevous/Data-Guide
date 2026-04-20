@@ -1,0 +1,6 @@
+[
+  {"patient_id": "P001", "location": "North", "metric": "balance_due", "value": 150.0, "data_type": "currency"},
+  {"patient_id": "P001", "location": "North", "metric": "visit_count", "value": 3, "data_type": "numeric"},
+  {"patient_id": "P002", "location": "South", "metric": "balance_due", "value": 0.0, "data_type": "currency"},
+  {"patient_id": "P002", "location": "South", "metric": "visit_count", "value": 1, "data_type": "numeric"}
+]

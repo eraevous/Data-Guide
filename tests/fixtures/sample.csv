@@ -1,0 +1,5 @@
+patient_id,location,metric,value,data_type
+P001,North,balance_due,150.00,currency
+P001,North,visit_count,3,numeric
+P002,South,balance_due,0.00,currency
+P002,South,visit_count,1,numeric

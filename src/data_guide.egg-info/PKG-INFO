@@ -1,7 +1,7 @@
 Metadata-Version: 2.4
 Name: data_guide
-Version: 0.0.1
-Summary: Accelerated and Augmented EDA
+Version: 0.1.0
+Summary: General-purpose EDA tool with pluggable connectors and multiple output formats
 Author: Zach
 Requires-Python: >=3.11
 Requires-Dist: pandas
@@ -10,16 +10,26 @@ Requires-Dist: scipy
 Requires-Dist: matplotlib
 Requires-Dist: seaborn
 Requires-Dist: missingno
-Requires-Dist: phonenumbers
 Requires-Dist: statsmodels
 Requires-Dist: scikit-learn
-Requires-Dist: geopandas
-Requires-Dist: esda
-Requires-Dist: requests
-Requires-Dist: beautifulsoup4
-Requires-Dist: python-magic
-Requires-Dist: markdown
-Requires-Dist: pdfplumber
 Requires-Dist: typer
 Requires-Dist: pyyaml
 Requires-Dist: tabulate>=0.9.0
+Requires-Dist: markdown
+Requires-Dist: beautifulsoup4
+Requires-Dist: openpyxl
+Requires-Dist: sqlalchemy
+Provides-Extra: snowflake
+Requires-Dist: snowflake-connector-python; extra == "snowflake"
+Provides-Extra: phone
+Requires-Dist: phonenumbers; extra == "phone"
+Provides-Extra: geo
+Requires-Dist: geopandas; extra == "geo"
+Requires-Dist: esda; extra == "geo"
+Provides-Extra: pdf
+Requires-Dist: pdfplumber; extra == "pdf"
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: pytest-cov; extra == "dev"
+Requires-Dist: pre-commit; extra == "dev"
+Requires-Dist: ruff; extra == "dev"

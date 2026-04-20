@@ -9,8 +9,8 @@ This repo uses a cognitive-coupled coding protocol. Read these before making str
 | File | Role |
 |------|------|
 | `AGENTS.md` | Operational protocol — Run/Drift cadence, memory capture, governance rules |
-| `CHARTER.md` | Engineering rules — metrics contract, output paths, Snowflake connection conventions |
-| `codex_++/purpose_files/*.purpose.md` | Per-module design contracts (IO schemas, Snowflake tables, risks) |
+| `CHARTER.md` | Engineering rules — metrics contract, output paths, connection conventions |
+| `codex_++/purpose_files/*.purpose.md` | Per-module design contracts (IO schemas, risks) |
 | `purpose_schema.md` | Template for creating new `.purpose.md` files |
 
 **Precedence:** CHARTER > AGENTS > module contracts. If a change would violate the Charter, stop and propose a compliant alternative.
@@ -54,26 +54,22 @@ There are no automated tests.
 
 ### Data source
 
-Most scripts read from **Snowflake** via `snowflake.snowpark` with credentials from environment variables — never hardcoded. Key tables:
+Scripts may read from external data sources (e.g., a data warehouse) via credentials from environment variables — never hardcoded.
 
-- `short_term_volume_predictions` — core predictions and actuals
-- `client_data_service_line_aggregations` — service line name lookup
-- `cross_validation_outputs` — CV scores by fold and feature combination
-
-**Exception**: `performance_investigation.py` reads from a local CSV (`Predictions/data/actuals_and_error_*.csv`) and an EDA features CSV. It no longer queries Snowflake at runtime.
+**Exception**: `performance_investigation.py` reads from a local CSV and an EDA features CSV. It no longer queries the data warehouse at runtime.
 
 ### Domain concepts
 
-- **Granular** — predictions broken down by `service_line_id`
-- **Rollup** — predictions aggregated across service lines (`service_line_id = -1`)
-- **Champion model** — model with lowest Hybrid Error Score for a given (strata_id, granularity, feature_combination) tuple
+- **Granular** — predictions broken down by a category identifier
+- **Rollup** — predictions aggregated across categories
+- **Champion model** — model with lowest Hybrid Error Score for a given combination of strata, granularity, and features
 - **Canonical metrics** — AE, APE, Hybrid Error Score. Formulas are defined once in `granularity_performance.py` and must be replicated identically in segment scripts.
 - **MESH** — the segment-level error metric. One value per `feature_segment` (constant across all rows for that segment). Never average it across rows; deduplicate to one row per segment before any threshold comparison.
-- **feature_segment** — concatenated key `strata_id|entity_id|patient_type_rollup|service_line` identifying one prediction series. The join key across all performance and monitoring DataFrames.
+- **feature_segment** — concatenated key identifying one prediction series. The join key across all performance and monitoring DataFrames.
 
 ### `Predictions/` — analytics scripts
 
-Standalone scripts, not imported by each other. Each reads Snowflake and writes to `Predictions/outputs/` or `Predictions/acf_outputs/`.
+Standalone scripts, not imported by each other. Each reads from the data source and writes to `Predictions/outputs/` or `Predictions/acf_outputs/`.
 
 | Script | Role |
 |--------|------|
@@ -107,7 +103,7 @@ Standalone scripts, not imported by each other. Each reads Snowflake and writes 
 
 When working in this repo, adapt cognitive mode based on task type:
 
-- **Run** — implementation, debugging, metric changes, Snowflake query fixes
-- **Drift** — updating `.purpose.md`, reviewing metric formula consistency, architecture review, Snowflake schema changes
+- **Run** — implementation, debugging, metric changes, data source query fixes
+- **Drift** — updating `.purpose.md`, reviewing metric formula consistency, architecture review, schema changes
 
 When touching a module, check its `.purpose.md` in `codex_++/purpose_files/` first. If the IO or metric contract has changed, update the `.purpose.md` as part of the work.

@@ -1,27 +1,47 @@
-# Ignore all files in the data/ and config/ directories
-# This prevents committing PHI/PII, secret keys, and other sensitive information
-# as well as large datasets that are not needed in the repository.
+# Datasets and large files
 data/
-config/
-
 *.csv
-*.pyc
-*.txt
-*.json
-*.png
-*.json
+*.xlsx
 *.gz
 *.zip
-*.xlsx
-*.exe
-*.html
+
+# Credentials and secrets — NEVER commit these
+*.credentials.json
+*.credentials.yaml
+creds/
+session_cookies.pkl
+debug_output.txt
+.env
+
+# Org-specific notebooks
+src/notebooks/
+
+# Build artifacts
+*.pyc
+__pycache__/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Config directory (may contain internal values)
+config/
+
+# Reports output
+/reports/
+/plots/
 *.trace.*
-
-# Ignore all files in the data_pipeline/llm/ directory
-# This is to prevent committing large model files or temporary files
-src/data_pipeline/llm/*
 /debug_and_traces/*
-
-!ast_deps.csv
-!requirements.txt
 /Codex_++/docs/codex_traces
+
+# Superpowers brainstorm sessions
+.superpowers/
+
+# Test artifacts
+.pytest_cache/
+.coverage
+
+# Keep these
+!requirements.txt
+!ast_deps.csv
