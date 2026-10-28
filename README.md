@@ -32,3 +32,10 @@ Example notebooks and templates are provided under `templates/`.
 - [Usage Guide](docs/USAGE_GUIDE.md)
 
 The [`purpose_files/`](purpose_files) directory contains purpose statements for each module.
+
+## License
+
+Licensed under the [MIT License](LICENSE). Contributions are welcome under the
+[Contributor License Agreement](CLA.md), which keeps them open under the same license
+while letting the maintainer also offer commercial versions. See
+[CONTRIBUTING.md](CONTRIBUTING.md).
