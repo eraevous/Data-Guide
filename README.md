@@ -27,6 +27,16 @@ python src/profiler_cli.py profile --config my_config.json --output-dir reports
 The main pipelines now import `DataProfiler` from `data_profiler` after consolidation.
 Example notebooks and templates are provided under `templates/`.
 
+## Understanding layer (prototype)
+
+```bash
+guide demo --out guide-demo                       # synthetic table with planted problems
+guide understand data.csv --annotations guide.yml --out out/
+guide compare before/guide-profile.json after/guide-profile.json
+```
+
+`guide understand` writes `guide-profile.json` (a versioned, deterministic artifact) and Markdown/HTML views derived from it. Findings are typed (observation, interpretation, hypothesis, action, question) and say who produced them: deterministic rules or the human annotations file. There is no AI-generated text. A register lists what the data cannot tell you (row unit, how rows were produced, why values are missing) as open questions. See [docs/prototype/README.md](docs/prototype/README.md) for what is built, the acceptance loop, and the known limits.
+
 ## Documentation
 - [Architecture Overview](docs/ARCHITECTURE_OVERVIEW.md)
 - [Usage Guide](docs/USAGE_GUIDE.md)

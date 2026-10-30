@@ -206,5 +206,64 @@ def run(
             typer.echo(f"WARNING: Unknown output type '{out_type}', skipping.")
 
 
+@app.command()
+def understand(
+    file: Path = typer.Argument(..., help="Data file (csv, xlsx, json, sqlite with --query)."),
+    out: Path = typer.Option(Path("guide-out"), help="Output directory."),
+    annotations: Optional[Path] = typer.Option(None, help="guide.yml with human-stated meaning, row unit, question and target."),
+    connector: str = typer.Option("auto", help="Connector type: auto|csv|excel|json|sqlite"),
+    query: Optional[str] = typer.Option(None, help="SQL query (sqlite)."),
+    top_k: int = typer.Option(10, help="How many of the strongest relations to report."),
+) -> None:
+    """Build the understanding artifact (guide-profile.json) and its Markdown/HTML views."""
+    from understanding.annotations import AnnotationError
+    from understanding.workflow import understand as run_understand
+
+    connector_type = _auto_detect_connector(file) if connector == "auto" else connector
+    cfg: dict = {"path": str(file)}
+    if query:
+        cfg["query"] = query
+    gdf = _build_connector(connector_type, cfg).load()
+    try:
+        paths = run_understand(gdf.df, source=file.name, out_dir=out, annotations_path=annotations, top_k=top_k)
+    except AnnotationError as e:
+        typer.echo(f"ERROR: annotations: {e}", err=True)
+        raise typer.Exit(code=1)
+    for kind, p in paths.items():
+        typer.echo(f"{kind}: {p}")
+
+
+@app.command()
+def compare(
+    before: Path = typer.Argument(..., help="Earlier guide-profile.json"),
+    after: Path = typer.Argument(..., help="Later guide-profile.json"),
+    out: Optional[Path] = typer.Option(None, help="Write the comparison JSON here."),
+) -> None:
+    """Compare two understanding artifacts: before/after deltas and findings resolved or new."""
+    import json as _json
+
+    from understanding.workflow import compare as run_compare, render_compare
+
+    d = run_compare(before, after)
+    if out:
+        out.write_text(_json.dumps(d, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    typer.echo(render_compare(d))
+
+
+@app.command()
+def demo(out: Path = typer.Option(Path("guide-demo"), help="Output directory.")) -> None:
+    """Write a synthetic encounters table with planted problems, its annotations, and its guide."""
+    from understanding.demo import ANNOTATIONS_YAML, encounters
+    from understanding.workflow import understand as run_understand
+
+    out.mkdir(parents=True, exist_ok=True)
+    df = encounters()
+    df.to_csv(out / "encounters.csv", index=False)
+    (out / "guide.yml").write_text(ANNOTATIONS_YAML, encoding="utf-8")
+    paths = run_understand(df, source="encounters.csv (synthetic)", out_dir=out, annotations_path=out / "guide.yml")
+    for kind, p in paths.items():
+        typer.echo(f"{kind}: {p}")
+
+
 if __name__ == "__main__":
     app()

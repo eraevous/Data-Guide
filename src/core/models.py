@@ -38,3 +38,6 @@ class ProfilingResult:
     column_stats: dict[str, Any]
     bivariate_stats: dict[str, Any] = field(default_factory=dict)
     annotations: dict[str, Narrative] | None = None
+    # Prototype (2026-10-30): the understanding artifact (typed findings, register of unknowns).
+    # `guide-profile.json` is a proposed serialization of this contract, not a replacement for it.
+    understanding: dict[str, Any] | None = None
