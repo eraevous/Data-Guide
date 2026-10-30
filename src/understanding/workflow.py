@@ -23,8 +23,6 @@ def understand(df: pd.DataFrame, *, source: str, out_dir: Path, annotations_path
     from outputs.understanding_report import to_html, to_markdown
 
     annots = ann.load(annotations_path, [str(c) for c in df.columns]) if annotations_path else ann.empty()
-    df = df.copy()
-    df.columns = [str(c) for c in df.columns]
     art = build_artifact(df, source=source, annotations=annots, top_k=top_k)
     out_dir.mkdir(parents=True, exist_ok=True)
     paths = {}
@@ -63,6 +61,6 @@ def render_compare(d: dict) -> str:
         L += ["## Missing values that were filled", ""] + [f"- {w['statement']}" for w in d["missingness_warnings"]] + [""]
     for key, title in (("findings_resolved", "No longer found"), ("findings_new", "New findings")):
         if d[key]:
-            L += [f"## {title}", ""] + [f"- [{f['kind']}] {f['statement']}" for f in d[key]] + [""]
+            L += [f"## {title}", ""] + [f"- [{f['kind']} · {f.get('generator') or 'rule'}] {f['statement']}" for f in d[key]] + [""]
     L.append(d["note"])
     return "\n".join(L) + "\n"

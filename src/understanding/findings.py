@@ -15,8 +15,7 @@ CONFIDENCE_MEANING = {
     "measured": "a reproducible calculation on this data; says nothing about why",
     "untested": "a possible explanation nobody has checked",
     "stated": "written by a person in the annotations; provenance, not proof",
-    "low": "rule-based reading with weak support", "medium": "rule-based reading with moderate support",
-    "high": "rule-based reading with strong support", "n/a": "not applicable",
+    "heuristic": "a fixed rule's reading or suggestion; its strength is not measured", "n/a": "not applicable",
 }
 
 KIND_MEANING = {
@@ -42,7 +41,7 @@ class Finding:
 
     @property
     def id(self) -> str:
-        key = "|".join([self.kind, self.rule, ",".join(sorted(self.subjects)), self.generator])
+        key = "|".join([self.kind, self.rule, ",".join(sorted(map(str, self.subjects))), self.generator])
         if self.generator == "human":
             key += "|" + self.statement
         return f"F-{hashlib.sha256(key.encode()).hexdigest()[:10]}"
@@ -60,6 +59,8 @@ class Finding:
             d["confidence"] = "untested"
         elif self.kind == "question":
             d["confidence"] = "n/a"
+        else:
+            d["confidence"] = "heuristic"
         return d
 
 
@@ -67,4 +68,4 @@ def sort_findings(findings: list[Finding]) -> list[Finding]:
     order = {k: i for i, k in enumerate(KINDS)}
     rank = {"target": 0, "question": 1, None: 2}
     return sorted(findings, key=lambda f: (order[f.kind], rank.get(f.relevance, 2), f.rule,
-                                           ",".join(f.subjects), f.statement))
+                                           ",".join(map(str, f.subjects)), f.statement))

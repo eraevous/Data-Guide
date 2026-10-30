@@ -53,10 +53,13 @@ def load(path: str | Path | None, columns: list[str]) -> dict[str, Any]:
     unknown = set(ds) - set(DATASET_KEYS)
     if unknown:
         raise AnnotationError(f"unknown dataset keys: {sorted(unknown)}; allowed: {list(DATASET_KEYS)}")
+    columns = [str(c) for c in columns]
     target = ds.get("target")
+    if target is not None:
+        target = ds["target"] = str(target)
     if target is not None and target not in columns:
         raise AnnotationError(f"target {target!r} is not a column")
-    cols = data.get("columns") or {}
+    cols = {str(k): v for k, v in (data.get("columns") or {}).items()}
     for c, spec in cols.items():
         if c not in columns:
             raise AnnotationError(f"annotated column {c!r} is not in the data")
@@ -67,6 +70,7 @@ def load(path: str | Path | None, columns: list[str]) -> dict[str, Any]:
     for i in interps:
         if i.get("kind", "interpretation") not in ("interpretation", "hypothesis", "action", "question"):
             raise AnnotationError("interpretation kind must be interpretation, hypothesis, action or question")
+        i["columns"] = [str(c) for c in i.get("columns", [])]
         if not i.get("statement"):
             raise AnnotationError("each interpretation needs a statement")
     return {"dataset": ds, "columns": cols, "interpretations": interps,

@@ -325,3 +325,102 @@ def test_aggregate_labels_hypothesis_and_decoy():
     assert any(f["kind"] == "hypothesis" for f in hyp)
     clean = build_artifact(pd.DataFrame({"region": ["North", "South", "East", "West"] * 15, "sales": range(60)}), source="y")
     assert not rules_fired(clean, "aggregate-labels")
+
+
+# ---------------------------------------------------------------- regressions from the independent technical review
+def test_missing_by_group_does_not_fire_on_random_missingness():
+    fired = 0
+    for seed in range(20):
+        rng = np.random.default_rng(seed)
+        n = 600
+        x = pd.Series(rng.normal(size=n))
+        x[rng.random(n) < .15] = np.nan
+        df = pd.DataFrame({"x": x, "store": rng.choice([f"s{i}" for i in range(50)], n), "y": rng.normal(size=n)})
+        fired += bool(rules_fired(build_artifact(df, source="m"), "missing-by-group"))
+    assert fired <= 1
+
+
+def test_missing_by_group_fires_on_real_dependence():
+    rng = np.random.default_rng(0)
+    period = np.repeat(np.arange(2000, 2010), 100)
+    x = pd.Series(rng.normal(size=1000))
+    x[(period >= 2008) & (rng.random(1000) < 0.9)] = np.nan
+    art = build_artifact(pd.DataFrame({"x": x, "period": period}), source="d")
+    obs = [f for f in rules_fired(art, "missing-by-group") if f["kind"] == "observation"]
+    assert obs and "varies with" in obs[0]["statement"] and obs[0]["evidence"]["p_value"] < 1e-6
+
+
+def test_mixed_utc_offsets_do_not_crash():
+    df = pd.DataFrame({"ts": [f"2020-{m:02d}-15T08:00:00{'-05:00' if m in (1, 2, 3, 11, 12) else '-04:00'}" for m in range(1, 13)] * 4,
+                       "v": range(48)})
+    art = build_artifact(df, source="x")
+    assert art["columns"]["ts"]["semantic"]["type"] == "temporal"
+
+
+def test_infinite_values_are_excluded_and_reported():
+    art = build_artifact(pd.DataFrame({"x": [1., 2, 3] * 13 + [np.inf], "y": range(40)}), source="x")
+    assert art["columns"]["x"]["stats"]["numeric"]["inf_count"] == 1
+    assert rules_fired(art, "infinite-values", "x")
+
+
+def test_non_string_column_names_and_collisions():
+    rng = np.random.default_rng(0)
+    art = build_artifact(pd.DataFrame({"country": ["a", "b"] * 20, 1960: rng.normal(size=40), 1961: rng.normal(size=40)}), source="x")
+    assert "1960" in art["columns"]
+    with pytest.raises(ValueError):
+        build_artifact(pd.DataFrame([[1, 2]] * 5, columns=[1, "1"]), source="x")
+
+
+def test_zero_fill_detected_when_column_already_had_zeros():
+    rng = np.random.default_rng(3)
+    x = pd.Series(rng.normal(10, 2, 1000))
+    x[rng.random(1000) < .2] = 0
+    x[rng.random(1000) < .4] = np.nan
+    d = compare_artifacts(build_artifact(pd.DataFrame({"x": x}), source="b"), build_artifact(pd.DataFrame({"x": x.fillna(0)}), source="a"))
+    assert d["missingness_warnings"][0].get("likely_fill") == 0
+
+
+def test_compare_keeps_generator(tmp_path):
+    df = encounters(300)
+    p = tmp_path / "g.yml"
+    p.write_text("interpretations:\n  - statement: A human note\n    columns: [payer]\n")
+    d = compare_artifacts(build_artifact(df, source="a"), build_artifact(df, source="b", annotations=ann.load(p, list(df.columns))))
+    assert any(f["generator"] == "human" for f in d["findings_new"])
+
+
+def test_small_scale_statistics_survive_rounding():
+    from understanding.columns import numeric_stats
+    st = numeric_stats(pd.Series(np.random.default_rng(0).normal(scale=1e-5, size=500)))
+    assert st["std"] > 0 and len(set(st["histogram"]["edges"])) > 1
+
+
+def test_left_skew_wording():
+    art = build_artifact(pd.DataFrame({"score": 100 - np.random.default_rng(0).lognormal(size=500) * 5}), source="x")
+    interp = [f for f in rules_fired(art, "skew", "score") if f["kind"] == "interpretation"]
+    assert interp and "small values pull it down" in interp[0]["statement"]
+
+
+def test_single_row_and_nested_and_two_date_values():
+    art = build_artifact(pd.DataFrame({"a": [1], "b": ["x"]}), source="one")
+    assert rules_fired(art, "too-few-rows") and not rules_fired(art, "constant")
+    art = build_artifact(pd.DataFrame({"tags": [["a"], ["b", "c"]] * 20, "v": range(40)}), source="n")
+    assert art["columns"]["tags"]["semantic"]["type"] == "nested"
+    art = build_artifact(pd.DataFrame({"d": pd.to_datetime(["2020-01-01", "2020-02-01"] * 20)}), source="d")
+    assert art["columns"]["d"]["semantic"]["type"] == "temporal"
+
+
+def test_numeric_column_names_can_be_annotated(tmp_path):
+    df = pd.DataFrame({"country": ["a", "b"] * 20, "1960": range(40)})
+    p = tmp_path / "g.yml"
+    p.write_text("dataset:\n  target: 1960\ncolumns:\n  1960:\n    meaning: year value\n")
+    a = ann.load(p, list(df.columns))
+    assert a["dataset"]["target"] == "1960" and "1960" in a["columns"]
+
+
+def test_dollar_labels_and_markdown_escaping():
+    from outputs.understanding_report import to_html, to_markdown
+    df = pd.DataFrame({"band": ["$5 to $10", "$x^$", "<b>|"] * 20, "v": range(60)})
+    art = build_artifact(df, source="x")
+    to_html(art)  # must not raise
+    md = to_markdown(art)
+    assert "<b>" not in md and "\\|" in md

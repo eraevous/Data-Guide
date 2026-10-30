@@ -21,7 +21,7 @@ DATE_NAME = re.compile(r"(date|time|_at$|_on$|dt$|day|month|year)", re.I)
 
 SEMANTIC_TYPES = ("constant", "identifier", "binary", "boolean", "temporal", "numeric_continuous",
                   "numeric_count", "numeric_coded", "categorical", "free_text", "email", "phone",
-                  "url", "numeric_as_text", "empty")
+                  "url", "numeric_as_text", "empty", "nested")
 ANALYZABLE = {"binary", "boolean", "numeric_continuous", "numeric_count", "numeric_coded",
               "categorical", "numeric_as_text"}
 NUMERIC = {"numeric_continuous", "numeric_count", "numeric_as_text"}
@@ -37,10 +37,12 @@ def _rate(values: pd.Series, pattern: re.Pattern) -> float:
 def _parse_dates(values: pd.Series) -> pd.Series:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        try:
-            return pd.to_datetime(values, errors="coerce", format="mixed")
-        except (TypeError, ValueError):
-            return pd.to_datetime(values, errors="coerce")
+        for kw in ({"format": "mixed"}, {"format": "mixed", "utc": True}, {"utc": True}):
+            try:
+                return pd.to_datetime(values, errors="coerce", **kw)
+            except (TypeError, ValueError):
+                continue
+        return pd.Series(pd.NaT, index=values.index)
 
 
 def numeric_view(s: pd.Series) -> pd.Series:
@@ -54,7 +56,7 @@ def numeric_view(s: pd.Series) -> pd.Series:
 
 def temporal_view(s: pd.Series) -> pd.Series:
     if pd.api.types.is_datetime64_any_dtype(s):
-        return s
+        return s.dt.tz_convert("UTC") if getattr(s.dt, "tz", None) is not None else s
     return _parse_dates(s.astype(str).where(s.notna()))
 
 
@@ -72,6 +74,12 @@ def infer(name: str, s: pd.Series, n_rows: int) -> dict[str, Any]:
     if n == 0:
         reasons.append("no non-null values")
         return out("empty", "high")
+    if nn.map(lambda v: isinstance(v, (list, dict, set, tuple))).any():
+        reasons.append("cells hold nested values (lists or mappings)")
+        return out("nested", "high")
+    if pd.api.types.is_datetime64_any_dtype(s):
+        reasons.append("datetime dtype")
+        return out("temporal", "high")
     nunique = int(nn.nunique())
     uniq_ratio = nunique / n
     if nunique == 1:
@@ -84,10 +92,6 @@ def infer(name: str, s: pd.Series, n_rows: int) -> dict[str, Any]:
         reasons.append("exactly two distinct values")
         alts.append("categorical")
         return out("binary", "high")
-    if pd.api.types.is_datetime64_any_dtype(s):
-        reasons.append("datetime dtype")
-        return out("temporal", "high")
-
     if pd.api.types.is_numeric_dtype(s):
         vals = nn.astype(float)
         is_int = bool(np.all(np.isclose(vals, np.round(vals))))

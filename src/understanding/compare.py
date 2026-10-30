@@ -41,7 +41,9 @@ def compare_artifacts(before: dict, after: dict) -> dict[str, Any]:
                           "recorded data; the before profile shows they were not."}
         za = (a.get("stats", {}).get("numeric") or {}).get("zero_rate") or 0
         zb = (b.get("stats", {}).get("numeric") or {}).get("zero_rate") or 0
-        if b.get("count") and abs((zb - za) * b["count"] - filled) <= max(1, 0.05 * filled):
+        zeros_a = za * (a["count"] - (a.get("nulls") or 0))   # zero_rate is over non-null values
+        zeros_b = zb * (b["count"] - (b.get("nulls") or 0))
+        if abs((zeros_b - zeros_a) - filled) <= max(1, 0.05 * filled):
             w["likely_fill"] = 0
             w["statement"] += " The new zeros match the filled rows, so they were probably filled with 0."
         else:
@@ -66,7 +68,7 @@ def compare_artifacts(before: dict, after: dict) -> dict[str, Any]:
                  "delta": after["dataset"]["rows"] - before["dataset"]["rows"]},
         "columns_added": added, "columns_removed": removed, "columns_changed": changed,
         "missingness_warnings": warnings,
-        "findings_resolved": [{"id": f["id"], "kind": f["kind"], "statement": f["statement"]} for f in resolved],
-        "findings_new": [{"id": f["id"], "kind": f["kind"], "statement": f["statement"]} for f in new],
+        "findings_resolved": [{k: f.get(k) for k in ("id", "kind", "generator", "relevance", "statement")} for f in resolved],
+        "findings_new": [{k: f.get(k) for k in ("id", "kind", "generator", "relevance", "statement")} for f in new],
         "note": "A resolved finding no longer fires on the new data. That is not proof the change was correct.",
     }

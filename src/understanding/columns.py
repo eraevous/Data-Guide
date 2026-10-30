@@ -21,7 +21,7 @@ def _r(x, nd=4):
         return x
     if math.isnan(x) or math.isinf(x):
         return None
-    return round(x, nd)
+    return float(f"{x:.6g}")
 
 
 def _examples(s: pd.Series, k: int = 5) -> list[str]:
@@ -31,8 +31,10 @@ def _examples(s: pd.Series, k: int = 5) -> list[str]:
 
 def numeric_stats(s: pd.Series) -> dict[str, Any]:
     v = numeric_view(s).dropna()
+    inf_count = int(np.isinf(v).sum())
+    v = v[np.isfinite(v)]
     if v.empty:
-        return {}
+        return {"inf_count": inf_count} if inf_count else {}
     q1, q3 = v.quantile([0.25, 0.75])
     iqr = q3 - q1
     far = ((v < q1 - 3 * iqr) | (v > q3 + 3 * iqr)) if iqr > 0 else pd.Series(False, index=v.index)
@@ -45,7 +47,7 @@ def numeric_stats(s: pd.Series) -> dict[str, Any]:
         "skew": _r(v.skew()) if len(v) > 2 else None,
         "kurtosis": _r(v.kurt()) if len(v) > 3 else None,
         "zero_rate": _r((v == 0).mean()), "negative_rate": _r((v < 0).mean()),
-        "far_outlier_rate": _r(far.mean()), "far_outlier_count": int(far.sum()),
+        "far_outlier_rate": _r(far.mean()), "far_outlier_count": int(far.sum()), "inf_count": inf_count,
     }
 
 
@@ -68,7 +70,7 @@ def categorical_stats(s: pd.Series) -> dict[str, Any]:
 
 
 def temporal_stats(s: pd.Series) -> dict[str, Any]:
-    t = temporal_view(s).dropna().sort_values()
+    t = temporal_view(s).dropna().sort_values().reset_index(drop=True)
     if t.empty:
         return {}
     diffs = t.diff().dropna()

@@ -48,12 +48,13 @@ def shape_rules(df: pd.DataFrame, periods: list[str]) -> tuple[list[Finding], di
     worst = max(rates, key=lambda c: (rates[c], c))
     others = [c for c in df.columns if c not in periods]
     out = [
-        Finding("observation", "wide-by-period", f"{len(periods)} columns are named like periods ({first} to {last}) and hold the same kind of value: "
-                f"this is a wide table, one column per period, keyed by {', '.join(map(str, others[:3])) or 'nothing else'}.",
+        Finding("observation", "wide-by-period", f"{len(periods)} columns are named like periods ({first} to {last}), and their inferred types match.",
                 subjects=periods, evidence={"period_columns": len(periods), "first": first, "last": last}),
         Finding("observation", "missing-by-period", f"Missing values by period: {rates[first]:.0%} in {first}, {rates[last]:.0%} in {last}, "
                 f"highest {rates[worst]:.0%} in {worst}.", subjects=periods, evidence={"null_rate_by_period": rates}),
-        Finding("interpretation", "wide-by-period", "Treating each period column as a separate variable makes neighbouring periods look like "
+        Finding("interpretation", "wide-by-period", f"This is probably a wide table, one column per period; the other columns "
+                f"({', '.join(map(str, others[:4])) or 'none'}) would identify each row. "
+                "Treating each period column as a separate variable makes neighbouring periods look like "
                 "near-duplicates and splits one measure into many; per-column findings for these columns are summarised instead.",
                 subjects=periods, based_on=["wide-by-period"]),
         Finding("action", "wide-by-period", f"Reshape to one row per {(others[0] if others else 'entity')} and period, re-profile, and compare.",
@@ -126,39 +127,58 @@ def dataset_rules(df: pd.DataFrame, semantics: dict, declared: dict) -> tuple[li
     return out, register
 
 
-def missing_by_group(df: pd.DataFrame, semantics: dict, max_levels: int = 60, min_spread: float = 0.3) -> list[Finding]:
-    """Where a column's missingness depends on another column (for example, a period), say so."""
-    out = []
-    n = len(df)
+def missing_by_group(df: pd.DataFrame, semantics: dict, max_levels: int = 60, min_group: int = 30,
+                     min_v: float = 0.15, alpha: float = 0.01, max_groupers: int = 15, max_rows: int = 50_000) -> list[Finding]:
+    """Where a column's missingness varies with another column (for example a period), test it before saying so.
+
+    For each missing-value column and each candidate grouping column, a chi-square test is run on the
+    missing x group table, using only groups of at least `min_group` rows. The alpha level is
+    Bonferroni-adjusted for every test run. The effect size is Cramer's V, and only effects of
+    at least `min_v` are reported.
+    """
+    from scipy.stats import chi2_contingency
+
+    if len(df) > max_rows:
+        df = df.sample(max_rows, random_state=0)
     groupers = [c for c in df.columns if semantics[c]["type"] in ("categorical", "binary", "numeric_coded", "numeric_count", "temporal")
-                and 2 <= df[c].nunique() <= max_levels and df[c].notna().all()]
-    for c in df.columns:
-        rate = df[c].isna().mean()
-        if not (0.02 <= rate <= 0.98):
-            continue
-        best = None
+                and 2 <= df[c].nunique() <= max_levels and df[c].notna().all()][:max_groupers]
+    targets = [c for c in df.columns if 0.02 <= df[c].isna().mean() <= 0.98]
+    tests = []
+    for c in targets:
+        m = df[c].isna()
         for g in groupers:
             if g == c:
                 continue
-            by = df[c].isna().groupby(df[g]).agg(["mean", "size"])
-            by = by[by["size"] >= max(5, 0.01 * n)]
-            if len(by) < 2:
+            sizes = df[g].value_counts()
+            keep = sizes[sizes >= min_group].index
+            if len(keep) < 2:
                 continue
-            spread = float(by["mean"].max() - by["mean"].min())
-            if spread >= min_spread and (best is None or spread > best[0]):
-                best = (spread, g, by)
-        if best:
-            spread, g, by = best
-            hi, lo = by["mean"].idxmax(), by["mean"].idxmin()
-            out.append(Finding("observation", "missing-by-group", f"Missingness in '{c}' depends on '{g}': {by['mean'].max():.0%} missing when "
-                               f"{g} = {hi}, {by['mean'].min():.0%} when {g} = {lo}.", subjects=[c, g],
-                               evidence={"spread": round(spread, 4), "highest": [str(hi), round(float(by['mean'].max()), 4)],
-                                         "lowest": [str(lo), round(float(by['mean'].min()), 4)],
-                                         "by_group": {str(k): round(float(v), 4) for k, v in by["mean"].items()}}))
-            out.append(Finding("interpretation", "missing-by-group", f"'{c}' is not missing completely at random: dropping or imputing its "
-                               f"missing rows changes the mix of '{g}'.", subjects=[c, g], based_on=["missing-by-group"]))
-            out.append(Finding("question", "missing-by-group", f"Why is '{c}' missing more often for some values of '{g}'?",
-                               subjects=[c, g], based_on=["missing-by-group"]))
+            sel = df[g].isin(keep)
+            table = pd.crosstab(df.loc[sel, g], m[sel])
+            if table.shape[1] < 2:
+                continue
+            chi2, pval, dof, _ = chi2_contingency(table, correction=False)
+            v = (chi2 / (table.to_numpy().sum() * (min(table.shape) - 1))) ** 0.5
+            tests.append((c, g, float(pval), float(v), m[sel].groupby(df.loc[sel, g]).mean()))
+    out = []
+    threshold = alpha / max(len(tests), 1)
+    best: dict[str, tuple] = {}
+    for c, g, pval, v, rates in tests:
+        if pval < threshold and v >= min_v and (c not in best or v > best[c][3]):
+            best[c] = (c, g, pval, v, rates)
+    for c, g, pval, v, rates in best.values():
+        hi, lo = rates.idxmax(), rates.idxmin()
+        ev = {"cramers_v": round(v, 4), "p_value": float(f"{pval:.3g}"), "bonferroni_threshold": float(f"{threshold:.3g}"),
+              "tests_run": len(tests), "min_group_size": min_group, "highest": [str(hi), round(float(rates.max()), 4)],
+              "lowest": [str(lo), round(float(rates.min()), 4)], "by_group": {str(k): round(float(x), 4) for k, x in rates.items()}}
+        out.append(Finding("observation", "missing-by-group", f"Missingness in '{c}' varies with '{g}': {rates.max():.0%} missing when "
+                           f"{g} = {hi}, {rates.min():.0%} when {g} = {lo} (chi-square p {'< 0.001' if pval < 0.001 else '= ' + str(ev['p_value'])}, Cramer's V {ev['cramers_v']}; "
+                           f"{len(tests)} tests, Bonferroni-adjusted).", subjects=[c, g], evidence=ev))
+        out.append(Finding("interpretation", "missing-by-group", f"Missingness in '{c}' is associated with '{g}', so it is unlikely to be missing "
+                           f"completely at random: dropping or imputing its missing rows changes the mix of '{g}'.", subjects=[c, g],
+                           based_on=["missing-by-group"]))
+        out.append(Finding("question", "missing-by-group", f"Why is '{c}' missing more often for some values of '{g}'?",
+                           subjects=[c, g], based_on=["missing-by-group"]))
     return out
 
 
@@ -193,13 +213,17 @@ def column_rules(name: str, s: pd.Series, sem: dict, prof: dict, annot: dict) ->
                            subjects=subj, evidence={"dtype": prof["dtype"]}, confidence="high"))
 
     num = st.get("numeric") or {}
-    if num:
+    if num.get("inf_count"):
+        out.append(Finding("observation", "infinite-values", f"{num['inf_count']} values of '{name}' are infinite; they are excluded from "
+                           "the statistics above.", subjects=subj, evidence={"inf_count": num["inf_count"]}))
+    if num.get("median") is not None:
         skew = num.get("skew")
         if skew is not None and abs(skew) >= 1:
             side = "right" if skew > 0 else "left"
             out.append(Finding("observation", "skew", f"'{name}' is strongly {side}-skewed (skew {skew}); median {num['median']} vs mean {num['mean']}.",
                                subjects=subj, evidence={"skew": skew, "mean": num["mean"], "median": num["median"]}, confidence="high"))
-            out.append(Finding("interpretation", "skew", f"The mean of '{name}' is a misleading summary; a few large values dominate it. "
+            pull = "a few large values pull it up" if skew > 0 else "a few small values pull it down"
+            out.append(Finding("interpretation", "skew", f"The mean of '{name}' is a misleading summary; {pull}. "
                                "Medians, quantiles or a log scale describe it better.", subjects=subj, based_on=["skew"]))
         if (num.get("zero_rate") or 0) >= 0.3:
             out.append(Finding("observation", "zero-inflated", f"{num['zero_rate']:.0%} of '{name}' values are exactly zero.",

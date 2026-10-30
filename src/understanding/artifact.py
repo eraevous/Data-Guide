@@ -26,7 +26,12 @@ def fingerprint(df: pd.DataFrame) -> str:
     h = hashlib.sha256()
     h.update(json.dumps([str(c) for c in df.columns]).encode())
     h.update(json.dumps([str(t) for t in df.dtypes]).encode())
-    h.update(pd.util.hash_pandas_object(df.astype(str), index=False).to_numpy().tobytes())
+    for c in df.columns:
+        col = df[c]
+        try:
+            h.update(pd.util.hash_pandas_object(col, index=False).to_numpy().tobytes())
+        except TypeError:  # unhashable cells (lists, dicts)
+            h.update(pd.util.hash_pandas_object(col.astype(str), index=False).to_numpy().tobytes())
     return h.hexdigest()
 
 
@@ -55,6 +60,12 @@ def _usefulness(declared: dict, findings: list[Finding], rel: dict) -> dict[str,
 
 def build_artifact(df: pd.DataFrame, *, source: str, annotations: dict | None = None, top_k: int = 10,
                    budget: int = 300) -> dict[str, Any]:
+    names = [str(c) for c in df.columns]
+    if len(set(names)) != len(names):
+        dup = sorted({n for n in names if names.count(n) > 1})
+        raise ValueError(f"column names must be unique as text; duplicated: {dup}")
+    df = df.copy()
+    df.columns = names
     annots = annotations or ann.empty()
     declared = dict(annots.get("dataset", {}))
     target = declared.get("target")
@@ -72,10 +83,19 @@ def build_artifact(df: pd.DataFrame, *, source: str, annotations: dict | None = 
                                     f"{inferred['type'].replace('_', ' ')} ({'; '.join(inferred['reasons'])}). Which is right?",
                                     subjects=[str(c)], evidence={"declared": a["semantic_type"], "inferred": inferred["type"]}))
         semantics[c] = sem
+        if sem["type"] == "nested":  # lists/dicts are unhashable: profile their text form
+            df[c] = df[c].map(lambda v: v if v is None or (isinstance(v, float) and v != v) else str(v))
         profiles[c] = colmod.profile_column(df[c], sem)
         findings += rules.column_rules(str(c), df[c], sem, profiles[c], a)
 
-    ds_findings, register = rules.dataset_rules(df, semantics, declared)
+    if n_rows < 2:
+        findings = [f for f in findings if f.rule not in ("constant",)]
+        findings.append(Finding("observation", "too-few-rows", f"The table has {n_rows} row(s); distributions, keys and relations "
+                                "cannot be assessed.", evidence={"rows": n_rows}))
+        ds_findings, register = [], {"candidate_keys": [], "candidate_compound_keys": [],
+                                     "row_unit": {"value": declared.get("row_unit"), "source": "human" if declared.get("row_unit") else "unknown"}}
+    else:
+        ds_findings, register = rules.dataset_rules(df, semantics, declared)
     findings += ds_findings
     periods = rules.period_columns(df, semantics)
     shape_findings, shape = rules.shape_rules(df, periods)

@@ -17,6 +17,17 @@ KIND_LABEL = {"observation": "Observation", "interpretation": "Interpretation", 
               "action": "Suggested action", "question": "Open question"}
 
 
+def _label(text: str, n: int = 28) -> str:
+    """Chart label: truncated, with $ escaped so matplotlib does not read it as maths notation."""
+    return str(text)[:n].replace("$", r"\$")
+
+
+def _md(text: Any) -> str:
+    """Escape user-controlled text for Markdown (tables, HTML passthrough, code spans)."""
+    return (str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            .replace("|", "\\|").replace("`", "\\`"))
+
+
 def _fmt(v: Any) -> str:
     if v is None:
         return "—"
@@ -74,7 +85,7 @@ def column_chart(col: dict, plt) -> str | None:
         levels = st["categorical"]["levels"]
         top = top if levels <= 8 else top[:10]
         fig, ax = plt.subplots(figsize=(4.2, 0.28 * len(top) + 0.5))
-        labels = [x["value"][:28] for x in top][::-1]
+        labels = [_label(x["value"]) for x in top][::-1]
         ax.barh(labels, [x["count"] for x in top][::-1], color=ACCENT)
         if levels > 8:
             ax.set_title(f"top 10 of {levels} levels", fontsize=8, color=MUTED, loc="left")
@@ -85,7 +96,7 @@ def column_chart(col: dict, plt) -> str | None:
         fig, ax = plt.subplots(figsize=(4.2, 1.9))
         ax.plot(list(range(len(mc))), list(mc.values()), color=ACCENT, marker="o", markersize=2.5, linewidth=1.2)
         ticks = list(range(0, len(mc), max(1, len(mc) // 6)))
-        ax.set_xticks(ticks, [list(mc)[i] for i in ticks], rotation=0)
+        ax.set_xticks(ticks, [_label(list(mc)[i]) for i in ticks], rotation=0)
         ax.set_ylabel("rows / month", fontsize=8, color=MUTED)
         _style(ax)
         return _img(fig, plt)
@@ -98,8 +109,8 @@ def relation_chart(pair: dict, plt) -> str | None:
         return None
     rows = g["rows"][::-1]
     fig, ax = plt.subplots(figsize=(4.2, 0.28 * len(rows) + 0.6))
-    ax.barh([r["group"][:28] for r in rows], [r["value"] for r in rows], color=ACCENT)
-    ax.set_xlabel(g["measure"], fontsize=8, color=MUTED)
+    ax.barh([_label(r["group"]) for r in rows], [r["value"] for r in rows], color=ACCENT)
+    ax.set_xlabel(_label(g["measure"], 80), fontsize=8, color=MUTED)
     _style(ax)
     return _img(fig, plt)
 
@@ -108,16 +119,16 @@ def relation_chart(pair: dict, plt) -> str | None:
 def to_markdown(a: dict) -> str:
     L: list[str] = []
     ds = a["dataset"]
-    L += [f"# Data Guide: {ds['source']}", "",
+    L += [f"# Data Guide: {_md(ds['source'])}", "",
           f"{ds['rows']:,} rows × {ds['columns']} columns · fingerprint `{ds['fingerprint'][:12]}` · schema `{a['schema']}`", "",
           "Every finding names its kind and who produced it. **rule** means deterministic rules; **human** means the annotations file. "
           "There is no AI-generated text.", ""]
     L += ["## What this data cannot tell us", ""]
     reg = a["register"]
     ru = reg["row_unit"]
-    L.append(f"- **Row unit:** {ru['value'] + ' (human)' if ru.get('value') else 'not stated'}")
+    L.append(f"- **Row unit:** {_md(ru['value']) + ' (human)' if ru.get('value') else 'not stated'}")
     gp = reg["generating_process"]
-    L.append(f"- **How rows were produced:** {gp['value'] + ' (human)' if gp.get('value') else 'not stated'}")
+    L.append(f"- **How rows were produced:** {_md(gp['value']) + ' (human)' if gp.get('value') else 'not stated'}")
     L.append(f"- **Why values are missing:** {reg['missingness_mechanism']}")
     if reg.get("candidate_keys"):
         L.append(f"- **Candidate keys (measured):** {', '.join(reg['candidate_keys'][:5])}")
@@ -129,7 +140,7 @@ def to_markdown(a: dict) -> str:
     else:
         for k in ("question", "decision", "target"):
             if u.get(k):
-                L.append(f"- **{k.title()} (human):** {u[k]}")
+                L.append(f"- **{k.title()} (human):** {_md(u[k])}")
         L += ["", u["note"], ""]
     byk: dict[str, list] = {}
     for f in a["findings"]:
@@ -142,7 +153,7 @@ def to_markdown(a: dict) -> str:
         L += [f"### {PLURAL[k].capitalize()} ({len(fs)}): {a['kind_meaning'][k]}", ""]
         for f in fs:
             tag = f"`{f['generator']}`" + (" · `target`" if f.get("relevance") == "target" else "")
-            L.append(f"- {f['statement']} {tag} <sub>{f['id']}</sub>")
+            L.append(f"- {_md(f['statement'])} {tag} <sub>{f['id']}</sub>")
         L.append("")
     rel = a["relations"]
     L += ["## Relations", "",
@@ -150,16 +161,16 @@ def to_markdown(a: dict) -> str:
           + (f"left out: {'; '.join(x['column'] + ' (' + x['reason'] + ')' for x in rel['excluded_columns'][:8])}; " if rel['excluded_columns'] else "") + f"showing the strongest {len(rel['top'])} (negligible effects omitted). {rel['caution']}", "",
           "| columns | measure | effect | strength | n |", "|---|---|---|---|---|"]
     for p in rel["top"]:
-        L.append(f"| {' × '.join(p['columns'])} | {p['method']} | {p['effect']} | {p['strength']} | {p['n']} |")
+        L.append(f"| {_md(' × '.join(p['columns']))} | {p['method']} | {p['effect']} | {p['strength']} | {p['n']} |")
     L += ["", "## Data dictionary", ""]
     for name, c in a["columns"].items():
         sem = c["semantic"]
         meaning = c["meaning"] or "_not stated_"
-        L += [f"### `{name}`", "",
-              f"- **Meaning:** {meaning}" + (" (human)" if c["meaning"] else ""),
+        L += [f"### {_md(name)}", "",
+              f"- **Meaning:** {_md(meaning)}" + (" (human)" if c["meaning"] else ""),
               f"- **Type:** {sem['type']} ({sem['source']}, confidence {sem['confidence']}): {'; '.join(sem['reasons'])}",
               f"- **Non-null:** {c['count'] - c['nulls']:,} of {c['count']:,} · distinct {c['distinct']:,}",
-              f"- **Examples:** {', '.join(c['examples'][:5])}"]
+              f"- **Examples:** {_md(', '.join(c['examples'][:5]))}"]
         num = c.get("stats", {}).get("numeric")
         if num:
             L.append(f"- **Distribution:** median {_fmt(num['median'])}, IQR {_fmt(num['p25'])}–{_fmt(num['p75'])}, "
