@@ -107,7 +107,7 @@ class TypeResolver:
                 factor = 1000 if numeric.dropna().abs().gt(1_000_000_000_000).any() else 1
                 df[column] = pd.to_datetime(numeric / factor, unit="s", errors="coerce")
             elif info.semantic == "datetime":
-                df[column] = pd.to_datetime(df[column], errors="coerce", infer_datetime_format=True)
+                df[column] = pd.to_datetime(df[column], errors="coerce")
             elif info.logical == "currency":
                 cleaned = (
                     df[column]
@@ -177,7 +177,7 @@ class TypeResolver:
         # Attempt heuristic inference for object columns
         sample = series.dropna().astype(str).head(50)
         if not sample.empty:
-            parsed_dates = pd.to_datetime(sample, errors="coerce", infer_datetime_format=True)
+            parsed_dates = pd.to_datetime(sample, errors="coerce")
             if parsed_dates.notna().mean() > 0.8:
                 return "datetime", "datetime"
             cleaned_numeric = pd.to_numeric(
