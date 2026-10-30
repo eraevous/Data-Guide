@@ -36,24 +36,26 @@ def compare_artifacts(before: dict, after: dict) -> dict[str, Any]:
         filled = (a.get("nulls") or 0) - (b.get("nulls") or 0)
         if filled <= 0 or a.get("count") != b.get("count"):
             continue
-        w = {"column": c, "rows_filled": filled,
-             "statement": f"{filled} rows of '{c}' that were missing now hold values. Read alone, the new profile would treat them as "
-                          "recorded data; the before profile shows they were not."}
+        w = {"column": c, "missing_before": a.get("nulls"), "missing_after": b.get("nulls"), "missing_decrease": filled,
+             "row_lineage": "unavailable: profiles hold aggregates, so which rows changed cannot be known",
+             "statement": f"Suspected filling: '{c}' had {a.get('nulls')} missing values before and {b.get('nulls')} after, with the same row count. "
+                          "Profiles hold aggregates, so which rows changed, and whether they were imputed, cannot be established here. "
+                          "If they were filled, the new profile alone would read them as recorded data."}
         za = (a.get("stats", {}).get("numeric") or {}).get("zero_rate") or 0
         zb = (b.get("stats", {}).get("numeric") or {}).get("zero_rate") or 0
         zeros_a = za * (a["count"] - (a.get("nulls") or 0))   # zero_rate is over non-null values
         zeros_b = zb * (b["count"] - (b.get("nulls") or 0))
         if abs((zeros_b - zeros_a) - filled) <= max(1, 0.05 * filled):
             w["likely_fill"] = 0
-            w["statement"] += " The new zeros match the filled rows, so they were probably filled with 0."
+            w["statement"] += f" The number of zeros rose by about {filled}, consistent with filling with 0."
         else:
             ta = {x["value"]: x["count"] for x in (a.get("stats", {}).get("categorical") or {}).get("top", [])}
             for x in (b.get("stats", {}).get("categorical") or {}).get("top", []):
                 if abs(x["count"] - ta.get(x["value"], 0) - filled) <= max(1, 0.05 * filled):
                     w["likely_fill"] = x["value"]
-                    w["statement"] += f" The new rows match the value {x['value']!r}, so they were probably filled with it."
+                    w["statement"] += f" The count of {x['value']!r} rose by about {filled}, consistent with filling with it."
                     break
-        w["statement"] += " Keep a missing-indicator, or keep the original column, so later analysis can tell filled values from observed ones."
+        w["statement"] += " If filling was intended, keep a missing-indicator or the original column so later analysis can tell filled values from observed ones."
         warnings.append(w)
     fa = {f["id"]: f for f in before["findings"]}
     fb = {f["id"]: f for f in after["findings"]}

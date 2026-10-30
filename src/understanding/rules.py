@@ -223,8 +223,9 @@ def column_rules(name: str, s: pd.Series, sem: dict, prof: dict, annot: dict) ->
             out.append(Finding("observation", "skew", f"'{name}' is strongly {side}-skewed (skew {skew}); median {num['median']} vs mean {num['mean']}.",
                                subjects=subj, evidence={"skew": skew, "mean": num["mean"], "median": num["median"]}, confidence="high"))
             pull = "a few large values pull it up" if skew > 0 else "a few small values pull it down"
-            out.append(Finding("interpretation", "skew", f"The mean of '{name}' is a misleading summary; {pull}. "
-                               "Medians, quantiles or a log scale describe it better.", subjects=subj, based_on=["skew"]))
+            out.append(Finding("interpretation", "skew", f"For questions about a typical value of '{name}', the mean can mislead: {pull}. "
+                               "Medians or quantiles describe the typical case; totals and averages per unit may still need the mean.",
+                               subjects=subj, based_on=["skew"]))
         if (num.get("zero_rate") or 0) >= 0.3:
             out.append(Finding("observation", "zero-inflated", f"{num['zero_rate']:.0%} of '{name}' values are exactly zero.",
                                subjects=subj, evidence={"zero_rate": num["zero_rate"]}, confidence="high"))
@@ -315,7 +316,8 @@ def relation_rules(rel: dict, target: str | None) -> list[Finding]:
         if p["effect"] >= 0.95 and p["method"] == "spearman_rho":
             out.append(Finding("observation", "near-duplicate", f"'{a}' and '{b}' move almost in lockstep (|rho| {p['effect']}).",
                                subjects=[a, b], evidence=p, confidence="high"))
-            out.append(Finding("action", "near-duplicate", f"Keep one of '{a}' and '{b}' in any model; together they double-count one signal.",
+            out.append(Finding("action", "near-duplicate", f"Before using both '{a}' and '{b}' as predictors, check whether the second adds "
+                               "anything beyond the first; if one is derived from the other, they may double-count one signal.",
                                subjects=[a, b], based_on=["near-duplicate"]))
             out.append(Finding("question", "near-duplicate", f"Are '{a}' and '{b}' the same quantity recorded twice, or one derived from the other?",
                                subjects=[a, b], based_on=["near-duplicate"]))

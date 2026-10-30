@@ -58,7 +58,7 @@ def render_compare(d: dict) -> str:
             L.append(f"- `{c['column']}`: " + "; ".join(parts))
         L.append("")
     if d.get("missingness_warnings"):
-        L += ["## Missing values that were filled", ""] + [f"- {w['statement']}" for w in d["missingness_warnings"]] + [""]
+        L += ["## Suspected filling of missing values", ""] + [f"- {w['statement']}" for w in d["missingness_warnings"]] + [""]
     for key, title in (("findings_resolved", "No longer found"), ("findings_new", "New findings")):
         if d[key]:
             L += [f"## {title}", ""] + [f"- [{f['kind']} · {f.get('generator') or 'rule'}] {f['statement']}" for f in d[key]] + [""]

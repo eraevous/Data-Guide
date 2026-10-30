@@ -241,7 +241,7 @@ def test_filled_missingness_is_flagged_in_compare():
     d = compare_artifacts(before, build_artifact(filled, source="after"))
     w = [x for x in d["missingness_warnings"] if x["column"] == "lab_sodium"]
     assert w and w[0]["likely_fill"] == 0
-    assert "missing-indicator" in w[0]["statement"]
+    assert "missing-indicator" in w[0]["statement"] and "Suspected filling" in w[0]["statement"]
 
 
 def test_filled_missingness_decoy_no_warning_when_nothing_filled():
